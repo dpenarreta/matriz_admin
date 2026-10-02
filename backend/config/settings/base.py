@@ -278,6 +278,10 @@ EMAIL_PORT = env.int("EMAIL_PORT", default=25)
 EMAIL_HOST_USER = env.str("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env.str("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=False)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+# Segundos máximos de espera al servidor SMTP: sin límite, un servidor lento
+# podía dejar colgado el programador de recordatorios.
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=20)
 DEFAULT_FROM_EMAIL = env.str(
     "DEFAULT_FROM_EMAIL", default=f"no-reply@{SYSTEM_NAME.lower().replace(' ', '-')}.local"
 )

@@ -104,7 +104,7 @@ fuera de esa red.
 | `NOTIFICATION_MAX_ATTEMPTS` | `3` | Reintentos automáticos de un aviso fallido |
 | `SCHEDULER_INTERVAL_SECONDS` | `300` | Segundos entre ciclos del programador (mínimo 30) |
 | `FRONTEND_URL` | `http://localhost:5173` | Base del enlace "Consultar el detalle" de los correos |
-| `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `DEFAULT_FROM_EMAIL` | consola | Correo saliente. En producción: `django.core.mail.backends.smtp.EmailBackend` y el SMTP corporativo con SPF y DKIM |
+| `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `EMAIL_TIMEOUT`, `DEFAULT_FROM_EMAIL` | consola, timeout 20 s | Correo saliente. En producción: `django.core.mail.backends.smtp.EmailBackend` y el SMTP corporativo con SPF y DKIM |
 
 ## Programador sin Docker
 
