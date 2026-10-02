@@ -18,7 +18,9 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 MIDDLEWARE = (  # noqa: F405
     MIDDLEWARE[:1] + ["whitenoise.middleware.WhiteNoiseMiddleware"] + MIDDLEWARE[1:]  # noqa: F405
 )
+# `default` (evidencias PDF) se conserva de base.py: sistema de archivos o S3
+# según DOCUMENT_STORAGE_BACKEND.
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    **STORAGES,  # noqa: F405
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }

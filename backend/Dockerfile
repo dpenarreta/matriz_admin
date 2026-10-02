@@ -2,7 +2,10 @@
 # paso de build/compilación previo y `collectstatic`/`migrate` deben correr
 # en el arranque del contenedor, con las variables de entorno reales — nunca
 # en tiempo de build, ver entrypoint.sh.
-FROM python:3.12-slim
+# Fijada a bookworm (Debian 12): el repositorio de Microsoft que instala el
+# driver ODBC de abajo es el de Debian 12; la etiqueta "3.12-slim" a secas ya
+# apunta a Debian 13 y el build fallaba.
+FROM python:3.12-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -27,7 +30,8 @@ COPY requirements/ requirements/
 RUN pip install --no-cache-dir -r requirements/prod.txt
 
 COPY . .
-RUN chmod +x entrypoint.sh && chown -R appuser:appuser /app
+# /app/media: evidencias PDF (volumen en docker-compose.prod.yml).
+RUN chmod +x entrypoint.sh && mkdir -p /app/media && chown -R appuser:appuser /app
 
 USER appuser
 

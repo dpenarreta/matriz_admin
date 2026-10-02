@@ -7,6 +7,7 @@
 # gunicorn.
 set -e
 
+python scripts/ensure_database.py
 python scripts/wait_for_db.py
 python manage.py collectstatic --noinput
 python manage.py migrate --noinput

@@ -1,0 +1,5 @@
+# Los scripts que corren dentro de contenedores Linux deben tener fin de línea
+# LF aunque se clone en Windows (con CRLF, "exec ./entrypoint.sh" falla).
+*.sh text eol=lf
+Dockerfile text eol=lf
+nginx.conf text eol=lf

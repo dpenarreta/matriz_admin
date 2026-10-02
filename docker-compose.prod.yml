@@ -1,13 +1,20 @@
-# Stack completo de producción. El docker-compose.yml de la raíz (sin
-# sufijo) sigue siendo solo SQL Server para desarrollo local — este archivo
-# es aparte, uso explícito: `docker compose -f docker-compose.prod.yml up
-# -d --build` (ver docs/DEPLOYMENT.md más abajo y el README).
+# Stack completo de producción de la Matriz Administrativa de Obligaciones.
+# El docker-compose.yml de la raíz (sin sufijo) sigue siendo solo SQL Server
+# para desarrollo local. Uso: `docker compose -f docker-compose.prod.yml up
+# -d --build` (ver docs/matriz/despliegue.md).
 #
-# `backend` lee su configuración de su propio .env (`env_file:`, la misma
-# fuente de verdad que en desarrollo), pero las variables de conexión a la
-# base se pisan explícitamente abajo: dentro de la red de Compose los
-# contenedores se alcanzan por nombre de servicio (`mssql`, `backend`),
+# `backend` y `worker` leen su configuración de backend/.env (`env_file:`),
+# pero las variables de conexión a la base se pisan abajo: dentro de la red
+# de Compose los contenedores se alcanzan por nombre de servicio (`mssql`),
 # nunca por `localhost`.
+x-backend-env: &backend-env
+  DB_HOST: mssql
+  DB_PORT: 1433
+  DB_NAME: ${DB_NAME:-matriz_admin}
+  DB_USER: sa
+  DB_PASSWORD: ${DB_PASSWORD:?la variable DB_PASSWORD es obligatoria}
+  DB_DRIVER: ODBC Driver 18 for SQL Server
+
 services:
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -15,7 +22,7 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${DB_PASSWORD:?la variable DB_PASSWORD es obligatoria}
-      MSSQL_PID: Developer
+      MSSQL_PID: ${MSSQL_PID:-Developer}
     volumes:
       - mssql_data:/var/opt/mssql
     healthcheck:
@@ -33,30 +40,44 @@ services:
       context: ./backend
     restart: unless-stopped
     env_file:
-      - ./backend/.env
-    environment:
-      DB_HOST: mssql
-      DB_PORT: 1433
-      DB_NAME: ${DB_NAME:-skelleton_base}
-      DB_USER: sa
-      DB_PASSWORD: ${DB_PASSWORD:?la variable DB_PASSWORD es obligatoria}
+      - ${BACKEND_ENV_FILE:-./backend/.env}
+    environment: *backend-env
+    volumes:
+      - evidencias:/app/media
     depends_on:
       mssql:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "${BACKEND_PUBLISHED_PORT:-8000}:8000"
+
+  # Programador: genera períodos, envía recordatorios, escala atrasos y
+  # reintenta avisos fallidos aunque nadie tenga la aplicación abierta.
+  # Misma imagen que `backend`; espera a que `backend` aplique migraciones.
+  worker:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    env_file:
+      - ${BACKEND_ENV_FILE:-./backend/.env}
+    environment: *backend-env
+    volumes:
+      - evidencias:/app/media
+    entrypoint: ["sh", "-c", "python scripts/ensure_database.py && python scripts/wait_for_db.py && sleep 20 && exec python manage.py run_scheduler"]
+    depends_on:
+      - backend
 
   frontend:
     build:
       context: ./frontend
       args:
-        VITE_APP_NAME: ${VITE_APP_NAME:-Skelleton Base}
+        VITE_APP_NAME: ${VITE_APP_NAME:-Matriz Administrativa de Obligaciones}
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
     restart: unless-stopped
     depends_on:
       - backend
     ports:
-      - "80:80"
+      - "${FRONTEND_PUBLISHED_PORT:-80}:80"
 
 volumes:
   mssql_data:
+  evidencias:
