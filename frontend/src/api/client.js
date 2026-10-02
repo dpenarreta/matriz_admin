@@ -18,9 +18,15 @@ export const apiClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// Endpoints públicos: nunca llevan el token guardado. Un token vencido o
+// revocado que quedó en localStorage hacía que el backend rechazara el
+// propio login ("El token dado no es valido...") y el usuario no podía entrar.
+const PUBLIC_ENDPOINTS = [...AUTH_ENDPOINTS, "/auth/password-reset/"];
+
 apiClient.interceptors.request.use((config) => {
   const token = getAccessToken();
-  if (token) {
+  const isPublic = PUBLIC_ENDPOINTS.some((path) => config.url?.includes(path));
+  if (token && !isPublic) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
