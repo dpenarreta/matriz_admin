@@ -1,8 +1,9 @@
+from django.contrib.auth.models import Group
 from rest_framework import serializers
 
 from apps.users.models import User
 
-from .access import CompanyAccess
+from .access import PREFIX, CompanyAccess, matrix_roles
 from .models import Area, Branch, Company, ControlEntity, Membership
 
 
@@ -89,27 +90,60 @@ class MyCompanySerializer(serializers.Serializer):
         company = access.company
         return {
             **CompanySerializer(company).data,
-            "role": access.role,
-            "role_label": dict(Membership.Role.choices)[access.role],
+            "role": {"id": access.role_id, "name": access.role_name},
+            "role_label": access.role_name,
             "capabilities": sorted(access.capabilities),
             "is_superuser": access.is_superuser,
         }
 
 
+class MatrixRoleSerializer(serializers.ModelSerializer):
+    """Rol del template base visto desde la matriz: solo sus permisos `matriz.*`."""
+
+    permission_codenames = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Group
+        fields = ["id", "name", "permission_codenames"]
+        read_only_fields = fields
+
+    def get_permission_codenames(self, obj) -> list[str]:
+        return sorted(p.codename for p in obj.permissions.all() if p.codename.startswith(PREFIX))
+
+
 class MembershipSerializer(serializers.ModelSerializer):
     user = PersonSerializer(read_only=True)
-    role_label = serializers.CharField(source="get_role_display", read_only=True)
+    role = serializers.SerializerMethodField()
+    role_label = serializers.CharField(source="role.name", read_only=True)
     areas = AreaSerializer(many=True, read_only=True)
+    company = serializers.SerializerMethodField()
 
     class Meta:
         model = Membership
-        fields = ["id", "user", "role", "role_label", "areas", "is_active", "created_at"]
+        fields = ["id", "user", "company", "role", "role_label", "areas", "is_active", "created_at"]
         read_only_fields = fields
+
+    def get_role(self, obj):
+        return {"id": obj.role_id, "name": obj.role.name}
+
+    def get_company(self, obj):
+        return {
+            "id": obj.company_id,
+            "code": obj.company.code,
+            "short_name": obj.company.short_name,
+        }
+
+
+class MatrixRoleField(serializers.PrimaryKeyRelatedField):
+    """Solo roles que otorgan algún permiso de la matriz."""
+
+    def get_queryset(self):
+        return matrix_roles()
 
 
 class MembershipCreateSerializer(serializers.Serializer):
     identifier = serializers.CharField(help_text="Usuario o correo de una cuenta existente.")
-    role = serializers.ChoiceField(choices=Membership.Role.choices)
+    role_id = MatrixRoleField(source="role")
     area_ids = serializers.PrimaryKeyRelatedField(
         queryset=Area.objects.all(), many=True, required=False, source="areas"
     )
@@ -127,7 +161,7 @@ class MembershipCreateSerializer(serializers.Serializer):
 
 
 class MembershipUpdateSerializer(serializers.Serializer):
-    role = serializers.ChoiceField(choices=Membership.Role.choices, required=False)
+    role_id = MatrixRoleField(source="role", required=False)
     area_ids = serializers.PrimaryKeyRelatedField(
         queryset=Area.objects.all(), many=True, required=False, source="areas"
     )

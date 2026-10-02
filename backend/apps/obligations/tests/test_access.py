@@ -46,7 +46,7 @@ def test_user_without_role_cannot_enter_another_company(other_company, people):
 def test_my_companies_lists_only_companies_with_role(company, other_company, people):
     response = client_for(people["responsible"]).get("/api/v1/companies/mine/")
     assert [item["code"] for item in response.data] == ["LC"]
-    assert response.data[0]["role"] == "responsable"
+    assert response.data[0]["role_label"] == "Responsable"
     assert "validar" not in response.data[0]["capabilities"]
 
 

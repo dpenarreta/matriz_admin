@@ -7,7 +7,7 @@ aquí se agrega la segunda condición: que el período sea "propio"
 
 from rest_framework.exceptions import NotFound
 
-from apps.organizations.access import Cap, CompanyAccess, access_role_label, deny, get_access
+from apps.organizations.access import PREFIX, Cap, CompanyAccess, deny, get_access
 
 from .models import Period
 
@@ -41,7 +41,7 @@ def require_period_capability(request, period: Period, capability: str, message:
     if not access.has(capability):
         deny(
             request,
-            message or f"Su rol ({access_role_label(access.role)}) no permite esta acción.",
+            message or f"Su rol ({access.role_name}) no tiene el permiso {PREFIX}{capability}.",
             capability=capability,
             target=period,
         )

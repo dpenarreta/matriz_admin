@@ -29,11 +29,12 @@ from reportlab.pdfgen import canvas
 from apps.obligations.models import Document, Obligation, Period, Priority
 from apps.obligations.scheduling import period_label
 from apps.obligations.services import PeriodService, record_event
+from apps.organizations.default_roles import RoleName, default_role
 from apps.organizations.models import Area, Company, ControlEntity, Membership
 from apps.reminders.services import get_config
 from apps.users.models import User
 
-R = Membership.Role
+R = RoleName
 
 # (usuario, nombre, apellido, rol, áreas que atiende como responsable)
 PEOPLE = {
@@ -311,7 +312,7 @@ class Command(BaseCommand):
                 email = f"{username}@{DOMAINS[company.code]}"
                 user = self._user(username, first, last, email, password)
                 membership, _ = Membership.objects.get_or_create(
-                    user=user, company=company, defaults={"role": role}
+                    user=user, company=company, defaults={"role": default_role(role)}
                 )
                 membership.areas.set([areas[code] for code in area_codes])
                 for code in area_codes:
@@ -319,7 +320,7 @@ class Command(BaseCommand):
                 admin = user if role == R.ADMIN else admin
                 supervisor = user if role == R.SUPERVISOR else supervisor
             Membership.objects.get_or_create(
-                user=auditor, company=company, defaults={"role": R.AUDITOR}
+                user=auditor, company=company, defaults={"role": default_role(R.AUDITOR)}
             )
             if company.general_manager_id is None:
                 company.general_manager = admin

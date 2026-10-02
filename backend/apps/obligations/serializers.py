@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 
 from rest_framework import serializers
 
-from apps.organizations.models import Area, Branch, ControlEntity, Membership
+from apps.organizations.models import Area, Branch, ControlEntity
 from apps.organizations.serializers import (
     AreaSerializer,
     BranchSerializer,
@@ -373,5 +373,4 @@ def catalog_choices() -> dict:
         ],
         "priorities": [{"value": v, "label": label} for v, label in Priority.choices],
         "stages": [{"value": v, "label": label} for v, label in Period.Stage.choices],
-        "roles": [{"value": v, "label": label} for v, label in Membership.Role.choices],
     }

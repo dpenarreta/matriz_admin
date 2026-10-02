@@ -10,10 +10,11 @@ from rest_framework.test import APIClient
 
 from apps.obligations.models import Obligation
 from apps.obligations.services import PeriodService
+from apps.organizations.default_roles import RoleName, default_role
 from apps.organizations.models import Area, Company, ControlEntity, Membership
 from apps.users.models import User
 
-R = Membership.Role
+R = RoleName
 PDF_BYTES = b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n"
 
 
@@ -85,7 +86,7 @@ def people(company):
         "auditor": R.AUDITOR,
     }
     for key, user in users.items():
-        Membership.objects.create(user=user, company=company, role=roles[key])
+        Membership.objects.create(user=user, company=company, role=default_role(roles[key]))
     company.general_manager = users["admin"]
     company.save()
     return users

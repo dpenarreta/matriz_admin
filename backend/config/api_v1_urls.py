@@ -28,6 +28,7 @@ urlpatterns = [
     path("admin/theme/", include("apps.branding.urls")),
     path("theme/current/", CurrentThemeView.as_view(), name="current-theme"),
     # --- Matriz Administrativa de Obligaciones ---
+    path("admin/", include("apps.organizations.admin_urls")),
     path("", include("apps.organizations.urls")),
     path("", include("apps.obligations.urls")),
     path("", include("apps.reminders.urls")),

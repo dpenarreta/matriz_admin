@@ -1,11 +1,10 @@
 """Empresas (tableros), sucursales, catálogos y membresías por empresa.
 
-El rol de negocio de un usuario (Administrador, Responsable,
-Supervisor/Aprobador, Auditor) vive en `Membership` y es **por empresa**:
+El rol de negocio de un usuario vive en `Membership` y es **por empresa**:
 la misma persona puede ser Responsable en una empresa y Auditor en otra.
-Es independiente de los roles/permisos administrativos del template base
-(`auth.Group` + catálogo de `apps.permissions`), que siguen gobernando el
-panel `/admin` (usuarios, roles, auditoría técnica, identidad visual).
+Los roles son los del template base (`auth.Group`) y sus permisos son los
+`matriz.*` del catálogo (`apps.permissions.catalog`), así que se crean y se
+editan en Administración → Roles.
 """
 
 from django.conf import settings
@@ -98,19 +97,25 @@ class ControlEntity(BaseModel):
 
 
 class Membership(BaseModel):
-    class Role(models.TextChoices):
-        ADMIN = "administrador", "Administrador"
-        RESPONSIBLE = "responsable", "Responsable"
-        SUPERVISOR = "supervisor", "Supervisor/Aprobador"
-        AUDITOR = "auditor", "Auditor"
+    """Rol de una persona en una empresa.
+
+    `role` es un rol del template base (`auth.Group`), editable en
+    Administración → Roles: lo que la persona puede hacer en esta empresa
+    son los permisos `matriz.*` de ese rol (ver `apps.organizations.access`).
+    """
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="memberships"
     )
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="memberships")
-    role = models.CharField(max_length=20, choices=Role.choices)
-    # Solo relevante para el Responsable: áreas en las que puede crear
-    # obligaciones. Vacío = cualquier área.
+    role = models.ForeignKey(
+        "auth.Group",
+        on_delete=models.PROTECT,
+        related_name="memberships",
+        help_text="Rol del template base con los permisos matriz.* que tiene en esta empresa.",
+    )
+    # Áreas en las que puede crear obligaciones quien no ve toda la empresa
+    # (p. ej. el Responsable). Vacío = cualquier área.
     areas = models.ManyToManyField(Area, blank=True, related_name="memberships")
     is_active = models.BooleanField(default=True)
 
@@ -122,4 +127,4 @@ class Membership(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.user} · {self.company} · {self.get_role_display()}"
+        return f"{self.user} · {self.company} · {self.role.name}"

@@ -5,11 +5,19 @@ from rest_framework.views import APIView
 
 from apps.core.request_meta import get_request_context
 
-from .access import Cap, accessible_companies, get_access, require_access, require_capability
+from .access import (
+    Cap,
+    accessible_companies,
+    get_access,
+    matrix_roles,
+    require_access,
+    require_capability,
+)
 from .models import Company, Membership
 from .serializers import (
     CompanySerializer,
     CompanySettingsWriteSerializer,
+    MatrixRoleSerializer,
     MembershipCreateSerializer,
     MembershipSerializer,
     MembershipUpdateSerializer,
@@ -66,15 +74,15 @@ class CompanyPeopleView(APIView):
         require_access(request, company)
         memberships = (
             Membership.objects.filter(company=company, is_active=True, user__is_active=True)
-            .select_related("user")
+            .select_related("user", "role")
             .order_by("user__first_name", "user__last_name", "user__username")
         )
         return Response(
             [
                 {
                     **PersonSerializer(m.user).data,
-                    "role": m.role,
-                    "role_label": m.get_role_display(),
+                    "role": m.role_id,
+                    "role_label": m.role.name,
                 }
                 for m in memberships
             ]
@@ -87,7 +95,7 @@ class MembershipListView(APIView):
         require_capability(request, company, Cap.MANAGE_MEMBERS)
         memberships = (
             Membership.objects.filter(company=company, is_active=True)
-            .select_related("user")
+            .select_related("user", "role")
             .prefetch_related("areas")
         )
         return Response(MembershipSerializer(memberships, many=True).data)
@@ -133,3 +141,14 @@ class MembershipDetailView(APIView):
             actor=request.user, membership=membership, context=get_request_context(request)
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CompanyRolesView(APIView):
+    """Roles asignables en la empresa (los que otorgan permisos matriz.*),
+    con sus permisos, para el selector y la tabla de la pestaña "Usuarios y
+    roles". Se editan en Administración del sistema → Roles."""
+
+    def get(self, request, company_id):
+        company = get_company(company_id)
+        require_capability(request, company, Cap.MANAGE_MEMBERS)
+        return Response(MatrixRoleSerializer(matrix_roles(), many=True).data)

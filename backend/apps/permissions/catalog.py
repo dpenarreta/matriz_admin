@@ -53,6 +53,50 @@ PERMISSION_CATALOG = {
             "configuracion.editar": "Editar configuración del sistema",
         },
     },
+    # --- Matriz Administrativa de Obligaciones ---
+    # Permisos de negocio. Se asignan a un rol y el rol se asigna a una
+    # persona **por empresa** (membresía), así la misma persona puede tener
+    # roles distintos en cada empresa. Ver docs/matriz/roles-y-permisos.md.
+    "matriz": {
+        "label": "Matriz de obligaciones",
+        "description": (
+            "Acciones sobre obligaciones y períodos de una empresa. Se ejercen en las "
+            "empresas donde la persona tiene un rol con estos permisos."
+        ),
+        "permissions": {
+            "matriz.ver_todas": (
+                "Ver todas las obligaciones de la empresa (sin este permiso, solo las "
+                "propias: donde es responsable o suplente)"
+            ),
+            "matriz.crear": "Crear obligaciones",
+            "matriz.editar": "Editar obligaciones y el seguimiento de los períodos",
+            "matriz.cambiar_fecha": "Cambiar la fecha de vencimiento (con justificación)",
+            "matriz.cargar": "Cargar evidencias y eliminar las rechazadas",
+            "matriz.enviar": "Enviar períodos a validación",
+            "matriz.validar": "Validar cierres, devolver períodos y rechazar evidencias",
+            "matriz.recordar": "Reenviar recordatorios y reintentar avisos fallidos",
+            "matriz.exportar": "Exportar la matriz y los reportes a Excel o PDF",
+            "matriz.ver_auditoria": "Ver el historial de auditoría y de notificaciones de la empresa",
+            "matriz.configurar": "Configurar la empresa y sus recordatorios",
+            "matriz.gestionar_miembros": "Asignar y quitar roles de personas en la empresa",
+        },
+    },
+    "empresas": {
+        "label": "Empresas",
+        "description": "Alta y edición de empresas (tableros) y sus sucursales.",
+        "permissions": {
+            "empresas.ver": "Ver empresas y sucursales",
+            "empresas.editar": "Crear, editar y desactivar empresas y sucursales",
+        },
+    },
+    "catalogos": {
+        "label": "Catálogos",
+        "description": "Áreas y entidades de control compartidas por todas las empresas.",
+        "permissions": {
+            "catalogos.ver": "Ver áreas y entidades de control",
+            "catalogos.editar": "Crear, editar y eliminar áreas y entidades de control",
+        },
+    },
     "auditoria": {
         "label": "Auditoría",
         "description": "Consulta del registro de auditoría de operaciones administrativas.",

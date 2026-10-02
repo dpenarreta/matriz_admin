@@ -11,6 +11,11 @@ urlpatterns = [
         name="company-people",
     ),
     path(
+        "companies/<int:company_id>/roles/",
+        views.CompanyRolesView.as_view(),
+        name="company-roles",
+    ),
+    path(
         "companies/<int:company_id>/members/",
         views.MembershipListView.as_view(),
         name="company-members",

@@ -1,30 +1,37 @@
 """Control de acceso de negocio por empresa (documento funcional, sección 4).
 
-Toda vista de la matriz resuelve primero la membresía del usuario en la
-empresa del recurso y después pregunta por una *capacidad*. Las capacidades
-"propias" (marcadas en `OWN_SCOPED`) además exigen que el usuario sea
-responsable o suplente del período — esa segunda comprobación vive en
-`apps.obligations.policies`, que conoce el modelo `Period`.
+Lo que una persona puede hacer en una empresa son los permisos `matriz.*`
+del rol de su membresía en esa empresa. Los roles son los del template base
+(`auth.Group`): se crean y se editan en Administración → Roles, así que este
+módulo no tiene ninguna lista fija de qué puede cada rol.
 
-Un superusuario de Django se trata como Administrador en todas las
-empresas, igual que en el template base es el bypass total del catálogo.
+Regla de alcance: quien no tiene `matriz.ver_todas` solo ve y actúa sobre
+los períodos donde es responsable o suplente (la segunda comprobación vive
+en `apps.obligations.policies`, que conoce el modelo `Period`).
+
+Un superusuario de Django tiene todos los permisos en todas las empresas,
+igual que en el template base es el bypass total del catálogo.
 """
 
 from dataclasses import dataclass, field
 
+from django.contrib.auth.models import Group
 from rest_framework.exceptions import NotFound, PermissionDenied
 
 from apps.core.audit import record_audit_event
 from apps.core.models import AuditLog
+from apps.permissions.catalog import PERMISSION_CATALOG
 
 from .models import Company, Membership
 
-Role = Membership.Role
+MODULE = "matriz"
+PREFIX = f"{MODULE}."
 
 
 class Cap:
-    """Nombres de capacidades. Constantes en vez de strings sueltos para que
-    un error de tipeo falle al importar y no en producción."""
+    """Capacidades: el codename del catálogo sin el prefijo `matriz.`.
+    Constantes en vez de strings sueltos para que un error de tipeo falle al
+    importar y no en producción."""
 
     VIEW_ALL = "ver_todas"
     CREATE = "crear"
@@ -40,32 +47,41 @@ class Cap:
     VIEW_AUDIT = "ver_auditoria"
 
 
-ROLE_CAPABILITIES: dict[str, frozenset[str]] = {
-    Role.ADMIN: frozenset(
-        {
-            Cap.VIEW_ALL,
-            Cap.CREATE,
-            Cap.EDIT,
-            Cap.CHANGE_DUE_DATE,
-            Cap.UPLOAD,
-            Cap.SUBMIT,
-            Cap.VALIDATE,
-            Cap.REMIND,
-            Cap.CONFIGURE,
-            Cap.MANAGE_MEMBERS,
-            Cap.EXPORT,
-            Cap.VIEW_AUDIT,
-        }
-    ),
-    Role.RESPONSIBLE: frozenset({Cap.CREATE, Cap.EDIT, Cap.UPLOAD, Cap.SUBMIT, Cap.REMIND}),
-    Role.SUPERVISOR: frozenset(
-        {Cap.VIEW_ALL, Cap.CHANGE_DUE_DATE, Cap.VALIDATE, Cap.REMIND, Cap.EXPORT, Cap.VIEW_AUDIT}
-    ),
-    Role.AUDITOR: frozenset({Cap.VIEW_ALL, Cap.EXPORT, Cap.VIEW_AUDIT}),
-}
+ALL_CAPABILITIES = frozenset(
+    codename.removeprefix(PREFIX) for codename in PERMISSION_CATALOG[MODULE]["permissions"]
+)
 
-# Capacidades que el Responsable solo ejerce sobre sus propios períodos.
-OWN_SCOPED = frozenset({Cap.EDIT, Cap.UPLOAD, Cap.SUBMIT, Cap.REMIND})
+# Capacidades que se ejercen sobre un período concreto. Sin `ver_todas`,
+# solo sobre los períodos propios.
+PERIOD_SCOPED = frozenset(
+    {
+        Cap.EDIT,
+        Cap.CHANGE_DUE_DATE,
+        Cap.UPLOAD,
+        Cap.SUBMIT,
+        Cap.VALIDATE,
+        Cap.REMIND,
+    }
+)
+
+
+def role_capabilities(role: Group) -> frozenset[str]:
+    """Permisos `matriz.*` del rol, sin el prefijo."""
+    codenames = role.permissions.filter(codename__startswith=PREFIX).values_list(
+        "codename", flat=True
+    )
+    return frozenset(codename.removeprefix(PREFIX) for codename in codenames)
+
+
+def matrix_roles():
+    """Roles que otorgan al menos un permiso de la matriz: los que tiene
+    sentido asignar en una empresa."""
+    return (
+        Group.objects.filter(permissions__codename__startswith=PREFIX)
+        .distinct()
+        .prefetch_related("permissions")
+        .order_by("name")
+    )
 
 
 @dataclass(frozen=True)
@@ -73,13 +89,11 @@ class CompanyAccess:
     """Lo que un usuario puede hacer en una empresa concreta."""
 
     company: Company
-    role: str
+    role_id: int | None
+    role_name: str
+    capabilities: frozenset[str]
     area_ids: frozenset[int] = field(default_factory=frozenset)
     is_superuser: bool = False
-
-    @property
-    def capabilities(self) -> frozenset[str]:
-        return ROLE_CAPABILITIES.get(self.role, frozenset())
 
     @property
     def sees_everything(self) -> bool:
@@ -90,12 +104,12 @@ class CompanyAccess:
 
     def is_scoped(self, capability: str) -> bool:
         """True si la capacidad se limita a los períodos propios."""
-        return self.role == Role.RESPONSIBLE and capability in OWN_SCOPED
+        return not self.sees_everything and capability in PERIOD_SCOPED
 
     def can_create_in_area(self, area_id: int) -> bool:
         if not self.has(Cap.CREATE):
             return False
-        if self.role != Role.RESPONSIBLE or not self.area_ids:
+        if self.sees_everything or not self.area_ids:
             return True
         return area_id in self.area_ids
 
@@ -104,9 +118,16 @@ def get_access(user, company: Company) -> CompanyAccess | None:
     if user is None or not user.is_authenticated or not company.is_active:
         return None
     if user.is_superuser:
-        return CompanyAccess(company=company, role=Role.ADMIN, is_superuser=True)
+        return CompanyAccess(
+            company=company,
+            role_id=None,
+            role_name="Superusuario",
+            capabilities=ALL_CAPABILITIES,
+            is_superuser=True,
+        )
     membership = (
         Membership.objects.filter(user=user, company=company, is_active=True)
+        .select_related("role")
         .prefetch_related("areas")
         .first()
     )
@@ -114,7 +135,9 @@ def get_access(user, company: Company) -> CompanyAccess | None:
         return None
     return CompanyAccess(
         company=company,
-        role=membership.role,
+        role_id=membership.role_id,
+        role_name=membership.role.name,
+        capabilities=role_capabilities(membership.role),
         area_ids=frozenset(area.id for area in membership.areas.all()),
     )
 
@@ -135,9 +158,13 @@ def deny(request, message: str, *, capability: str = "", target=None) -> None:
         record_audit_event(
             actor=request.user,
             action="access_denied",
-            module="matriz",
+            module=MODULE,
             target=target if target is not None else request.user,
-            new_values={"capability": capability, "method": request.method, "path": request.path},
+            new_values={
+                "required_permission": f"{PREFIX}{capability}" if capability else "",
+                "method": request.method,
+                "path": request.path,
+            },
             result=AuditLog.Result.FAILURE,
             context=get_request_context(request),
         )
@@ -158,11 +185,7 @@ def require_capability(request, company: Company, capability: str, message: str 
     if not access.has(capability):
         deny(
             request,
-            message or f"Su rol ({access_role_label(access.role)}) no permite esta acción.",
+            message or f"Su rol ({access.role_name}) no tiene el permiso {PREFIX}{capability}.",
             capability=capability,
         )
     return access
-
-
-def access_role_label(role: str) -> str:
-    return dict(Role.choices).get(role, role)
