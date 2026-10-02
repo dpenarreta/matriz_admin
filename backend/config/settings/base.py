@@ -49,7 +49,7 @@ SECRET_KEY = env.str("SECRET_KEY")
 DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
-SYSTEM_NAME = env.str("SYSTEM_NAME", default="Skelleton Base")
+SYSTEM_NAME = env.str("SYSTEM_NAME", default="Matriz Administrativa de Obligaciones")
 FRONTEND_URL = env.str("FRONTEND_URL", default="http://localhost:5173")
 BACKEND_PORT = env.int("BACKEND_PORT", default=8000)
 # URL pública por la que se accede a esta API (no necesariamente FRONTEND_URL
@@ -85,6 +85,10 @@ INSTALLED_APPS = [
     "apps.users",
     "apps.roles",
     "apps.branding",
+    # --- Módulos de negocio de la Matriz Administrativa de Obligaciones ---
+    "apps.organizations",
+    "apps.obligations",
+    "apps.reminders",
 ]
 
 MIDDLEWARE = [
@@ -165,7 +169,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # --- Internacionalización ---
 LANGUAGE_CODE = env.str("LANGUAGE_CODE", default="es")
-TIME_ZONE = env.str("TIME_ZONE", default="UTC")
+TIME_ZONE = env.str("TIME_ZONE", default="America/Guayaquil")
 USE_I18N = True
 USE_TZ = True
 
@@ -282,3 +286,40 @@ DEFAULT_FROM_EMAIL = env.str(
 from .logging import build_logging_config  # noqa: E402
 
 LOGGING = build_logging_config(debug=DEBUG)
+
+
+# --- Matriz Administrativa de Obligaciones ---
+# Evidencias (PDF). Por defecto, sistema de archivos local (MEDIA_ROOT, que en
+# Docker es un volumen). Para un bucket S3 compatible, instale
+# `django-storages[s3]` y defina DOCUMENT_STORAGE_BACKEND=s3 + AWS_* (ver
+# docs/matriz/despliegue.md).
+MEDIA_ROOT = env.path("MEDIA_ROOT", default=BASE_DIR / "media")
+MEDIA_URL = "media/"  # No se sirve públicamente: los PDF solo salen por la API con permisos.
+_DOCUMENT_STORAGE = env.str("DOCUMENT_STORAGE_BACKEND", default="filesystem")
+STORAGES = {
+    "default": {
+        "BACKEND": (
+            "storages.backends.s3.S3Storage"
+            if _DOCUMENT_STORAGE == "s3"
+            else "django.core.files.storage.FileSystemStorage"
+        ),
+    },
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
+if _DOCUMENT_STORAGE == "s3":
+    AWS_STORAGE_BUCKET_NAME = env.str("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_ENDPOINT_URL = env.str("AWS_S3_ENDPOINT_URL", default=None)
+    AWS_S3_REGION_NAME = env.str("AWS_S3_REGION_NAME", default=None)
+    AWS_DEFAULT_ACL = None
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_QUERYSTRING_AUTH = True
+
+DOCUMENT_MAX_UPLOAD_MB = env.int("DOCUMENT_MAX_UPLOAD_MB", default=10)
+DATA_UPLOAD_MAX_MEMORY_SIZE = (DOCUMENT_MAX_UPLOAD_MB + 1) * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = DATA_UPLOAD_MAX_MEMORY_SIZE
+
+PERIOD_CODE_PREFIX = env.str("PERIOD_CODE_PREFIX", default="OBL")
+# Días antes del vencimiento del último período en que se genera el siguiente.
+PERIOD_GENERATION_LEAD_DAYS = env.int("PERIOD_GENERATION_LEAD_DAYS", default=30)
+NOTIFICATION_MAX_ATTEMPTS = env.int("NOTIFICATION_MAX_ATTEMPTS", default=3)
+SCHEDULER_INTERVAL_SECONDS = env.int("SCHEDULER_INTERVAL_SECONDS", default=300)

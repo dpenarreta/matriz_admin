@@ -1,3 +1,5 @@
 -r base.txt
 gunicorn==23.0.0
 whitenoise==6.8.2
+# Solo si DOCUMENT_STORAGE_BACKEND=s3 (bucket S3 compatible para las evidencias)
+django-storages[s3]==1.14.4

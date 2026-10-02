@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ system_name }}</title>
+  </head>
+  <body style="margin:0;padding:24px;background:#f2f4f8;font-family:Arial,Helvetica,sans-serif;color:#0f2138;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #d9e0eb;border-radius:10px;overflow:hidden;">
+      <tr>
+        <td style="background:#0d2a4d;color:#ffffff;padding:16px 20px;font-weight:bold;font-size:16px;">{{ system_name }}</td>
+      </tr>
+      <tr>
+        <td style="padding:20px;font-size:14px;line-height:1.5;">
+          <p style="margin:0 0 12px;">Estimado(a) {{ recipient_name }},</p>
+          {% if is_escalation %}
+          <p style="margin:0 0 12px;">La siguiente obligación está <b>vencida sin cierre validado</b> ({{ status.days_overdue }} día(s) de atraso). Se le escala por ser su supervisor:</p>
+          {% else %}
+          <p style="margin:0 0 12px;">Le recordamos el vencimiento de la siguiente obligación:</p>
+          {% endif %}
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;border-collapse:collapse;">
+            <tr><td style="padding:5px 0;color:#667;width:40%;">Obligación</td><td style="padding:5px 0;"><b>{{ obligation.name }}</b></td></tr>
+            <tr><td style="padding:5px 0;color:#667;">Código</td><td style="padding:5px 0;">{{ period.code }}</td></tr>
+            <tr><td style="padding:5px 0;color:#667;">Período</td><td style="padding:5px 0;">{{ period.label }}</td></tr>
+            <tr><td style="padding:5px 0;color:#667;">Empresa</td><td style="padding:5px 0;">{{ company.short_name }}</td></tr>
+            <tr><td style="padding:5px 0;color:#667;">Entidad de control</td><td style="padding:5px 0;">{{ obligation.control_entity.name }}</td></tr>
+            <tr><td style="padding:5px 0;color:#667;">Responsable</td><td style="padding:5px 0;">{{ responsible_name }}</td></tr>
+            <tr><td style="padding:5px 0;color:#667;">Vencimiento</td><td style="padding:5px 0;">{{ due_text }}</td></tr>
+            <tr><td style="padding:5px 0;color:#667;">Estado actual</td><td style="padding:5px 0;">{{ status.label }}</td></tr>
+            <tr><td style="padding:5px 0;color:#667;">Evidencia esperada</td><td style="padding:5px 0;">{{ obligation.expected_evidence }}</td></tr>
+          </table>
+          <p style="margin:18px 0 0;"><a href="{{ detail_url }}" style="background:#1c5da3;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:6px;display:inline-block;">Consultar el detalle y cargar la evidencia</a></p>
+          <p style="margin:16px 0 0;font-size:12px;color:#6b7889;">El enlace exige iniciar sesión. Este es un aviso automático; no responda a este correo.</p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

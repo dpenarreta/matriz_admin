@@ -14,6 +14,28 @@ logger = logging.getLogger("apps.core")
 _MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
 
+def _json_safe(data) -> dict:
+    """`request.data` puede traer archivos subidos (multipart), que no se
+    pueden guardar como JSON: se reemplazan por su nombre. Sin esto, auditar
+    una carga rechazada rompía la transacción en curso."""
+    from django.core.files.uploadedfile import UploadedFile
+
+    def clean(value):
+        if isinstance(value, UploadedFile):
+            return f"<archivo {value.name}>"
+        if isinstance(value, (list, tuple)):
+            return [clean(item) for item in value]
+        if isinstance(value, dict):
+            return {key: clean(item) for key, item in value.items()}
+        return value
+
+    items = data.lists() if hasattr(data, "lists") else data.items()
+    return {
+        key: clean(values[0] if isinstance(values, list) and len(values) == 1 else values)
+        for key, values in items
+    }
+
+
 def _audit_validation_failure(request, view, status_code) -> None:
     """Registra automáticamente cualquier fallo de validación (400) de un
     método mutante — un único punto transversal, en vez de repetir un
@@ -39,7 +61,7 @@ def _audit_validation_failure(request, view, status_code) -> None:
             action=f"{view_name}.validation_failed",
             target_type=view_name,
             target_id=target_id,
-            new_values=dict(request.data) if hasattr(request, "data") else {},
+            new_values=_json_safe(request.data) if hasattr(request, "data") else {},
             result=AuditLog.Result.FAILURE,
             context=get_request_context(request),
         )

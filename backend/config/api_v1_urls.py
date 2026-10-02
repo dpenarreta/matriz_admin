@@ -27,4 +27,8 @@ urlpatterns = [
     # --- Identidad institucional / tema ---
     path("admin/theme/", include("apps.branding.urls")),
     path("theme/current/", CurrentThemeView.as_view(), name="current-theme"),
+    # --- Matriz Administrativa de Obligaciones ---
+    path("", include("apps.organizations.urls")),
+    path("", include("apps.obligations.urls")),
+    path("", include("apps.reminders.urls")),
 ]

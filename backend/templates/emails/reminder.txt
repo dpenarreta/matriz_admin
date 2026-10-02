@@ -1,0 +1,19 @@
+{{ system_name }}
+
+Estimado(a) {{ recipient_name }},
+
+{% if is_escalation %}La siguiente obligación está vencida sin cierre validado ({{ status.days_overdue }} día(s) de atraso). Se le escala por ser su supervisor:{% else %}Le recordamos el vencimiento de la siguiente obligación:{% endif %}
+
+Obligación: {{ obligation.name }}
+Código: {{ period.code }}
+Período: {{ period.label }}
+Empresa: {{ company.short_name }}
+Entidad de control: {{ obligation.control_entity.name }}
+Responsable: {{ responsible_name }}
+Vencimiento: {{ due_text }}
+Estado actual: {{ status.label }}
+Evidencia esperada: {{ obligation.expected_evidence }}
+
+Consultar el detalle y cargar la evidencia: {{ detail_url }}
+
+Este es un aviso automático; no responda a este correo.

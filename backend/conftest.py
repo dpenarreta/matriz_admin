@@ -1,3 +1,5 @@
+pytest_plugins = ["apps.obligations.tests.fixtures"]
+
 import pytest
 from django.core.cache import cache
 
