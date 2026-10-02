@@ -2,7 +2,9 @@ import { BrowserRouter } from "react-router-dom";
 
 import { AppearanceProvider } from "./context/AppearanceContext";
 import { AuthProvider } from "./context/AuthContext";
+import { CompanyProvider } from "./context/CompanyContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { ToastProvider } from "./context/ToastContext";
 import { AppRoutes } from "./routes/AppRoutes";
 
 export function App() {
@@ -10,9 +12,13 @@ export function App() {
     <AppearanceProvider>
       <ThemeProvider>
         <AuthProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
+          <CompanyProvider>
+            <ToastProvider>
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </ToastProvider>
+          </CompanyProvider>
         </AuthProvider>
       </ThemeProvider>
     </AppearanceProvider>

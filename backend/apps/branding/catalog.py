@@ -41,8 +41,8 @@ ALLOWED_BORDER_RADII = {
 # Identidad visual por defecto de este skeleton — fuente única de verdad
 # para la migración de siembra y para "restaurar valores por defecto".
 DEFAULT_THEME = {
-    "site_name": "Skelleton Base",
-    "short_name": "Skelleton",
+    "site_name": "Matriz Administrativa de Obligaciones",
+    "short_name": "Matriz",
     "logo_url": "",
     "favicon_url": "",
     "color_primary": "#0D6EFD",

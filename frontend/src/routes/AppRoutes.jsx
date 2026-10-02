@@ -1,12 +1,19 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { AdminLayout } from "../components/admin/AdminLayout/AdminLayout";
+import { AppShell } from "../components/matriz/AppShell";
+import { RequireAuth } from "../components/matriz/RequireAuth";
 import { RequirePermission } from "../components/common/RequirePermission/RequirePermission";
 import { useAuth } from "../hooks/useAuth";
 import { Forbidden } from "../pages/Errors/Forbidden";
 import { NotFound } from "../pages/Errors/NotFound";
-import { Home } from "../pages/Home/Home";
 import { Login } from "../pages/Login/Login";
+import { CalendarioPage } from "../pages/Matriz/CalendarioPage";
+import { ConfiguracionPage as MatrizConfiguracionPage } from "../pages/Matriz/ConfiguracionPage";
+import { DocumentosPage } from "../pages/Matriz/DocumentosPage";
+import { MatrizPage } from "../pages/Matriz/MatrizPage";
+import { ReportesPage } from "../pages/Matriz/ReportesPage";
+import { ResumenPage } from "../pages/Matriz/ResumenPage";
 import { ChangePasswordRequired } from "../pages/PasswordReset/ChangePasswordRequired";
 import { ForgotPassword } from "../pages/PasswordReset/ForgotPassword";
 import { ResetPassword } from "../pages/PasswordReset/ResetPassword";
@@ -39,7 +46,21 @@ export function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<Navigate to="/resumen" replace />} />
+      <Route
+        element={
+          <RequireAuth>
+            <AppShell />
+          </RequireAuth>
+        }
+      >
+        <Route path="/resumen" element={<ResumenPage />} />
+        <Route path="/matriz" element={<MatrizPage />} />
+        <Route path="/calendario" element={<CalendarioPage />} />
+        <Route path="/documentos" element={<DocumentosPage />} />
+        <Route path="/reportes" element={<ReportesPage />} />
+        <Route path="/configuracion" element={<MatrizConfiguracionPage />} />
+      </Route>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

@@ -36,3 +36,4 @@ Thumbs.db
 *.log
 logs/
 backend/media/
+.e2e/

@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
       setupFiles: "./tests/setup.js",
       globals: true,
       env: {
-        VITE_APP_NAME: "Skelleton Base",
+        VITE_APP_NAME: "Matriz Administrativa de Obligaciones",
         VITE_API_BASE_URL: "http://localhost:8000/api/v1",
       },
     },

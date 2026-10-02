@@ -5,6 +5,7 @@ import "./styles/variables.css";
 import "./styles/appearance-tokens.css";
 import "./styles/breakpoints.css";
 import "./styles/global.css";
+import "./styles/matriz.css";
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";

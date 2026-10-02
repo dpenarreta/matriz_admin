@@ -1,3 +1,94 @@
-.login-page {
-  padding-top: 3rem;
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  background: radial-gradient(1200px 700px at 85% -10%, var(--mz-blue-100), transparent 60%), var(--mz-bg);
+}
+
+.login-aside {
+  flex: 1 1 44%;
+  background: linear-gradient(160deg, #0d2a4d, #0a1e38 70%);
+  color: #eaf1fb;
+  padding: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mz-font-display);
+  font-weight: 700;
+  font-size: 19px;
+}
+
+.login-glyph {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2c74c2, #5b93d3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: #fff;
+}
+
+.login-pitch {
+  max-width: 460px;
+}
+
+.login-pitch h1 {
+  color: #fff;
+  font-family: var(--mz-font-display);
+  font-size: 34px;
+  line-height: 1.15;
+  margin-bottom: 14px;
+}
+
+.login-pitch p,
+.login-foot {
+  color: rgba(224, 235, 250, 0.72);
+}
+
+.login-main {
+  flex: 1 1 56%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--mz-raised);
+  border: 1px solid var(--mz-border);
+  border-radius: 16px;
+  box-shadow: var(--mz-shadow-2);
+  padding: 36px;
+  color: var(--mz-ink);
+}
+
+.login-card h2 {
+  font-family: var(--mz-font-display);
+  font-size: 21px;
+  color: var(--mz-ink);
+}
+
+.login-sub {
+  color: var(--mz-ink-faint);
+  font-size: 13px;
+  margin-bottom: 22px;
+}
+
+@media (max-width: 880px) {
+  .login-aside {
+    display: none;
+  }
+}
+
+.login-card .app-button {
+  width: 100%;
 }

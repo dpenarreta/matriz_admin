@@ -18,51 +18,69 @@ export function Login() {
     event.preventDefault();
     try {
       const me = await login(form);
-      navigate(me.must_change_password ? "/change-password-required" : "/");
+      navigate(me.must_change_password ? "/change-password-required" : "/resumen");
     } catch {
       // El mensaje de error ya se expone vía useAuth().error
     }
   }
 
   return (
-    <div className="container login-page">
-      <h2>Iniciar sesión</h2>
-      <form onSubmit={handleSubmit} className="col-12 col-md-4">
-        {error && <div className="alert alert-danger">{error}</div>}
-        <div className="mb-3">
-          <label className="form-label" htmlFor="identifier">
-            Usuario o correo
-          </label>
-          <input
-            id="identifier"
-            name="identifier"
-            className="form-control"
-            value={form.identifier}
-            onChange={handleChange}
-            required
-          />
+    <div className="login-screen">
+      <aside className="login-aside">
+        <div className="login-brand">
+          <span className="login-glyph">MA</span> Matriz Administrativa de Obligaciones
         </div>
-        <div className="mb-3">
-          <label className="form-label" htmlFor="password">
-            Contraseña
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            className="form-control"
-            value={form.password}
-            onChange={handleChange}
-            required
-          />
+        <div className="login-pitch">
+          <h1>Un solo panel para cada obligación, cada vencimiento y cada evidencia.</h1>
+          <p>
+            Centraliza obligaciones regulatorias, contractuales e internas por área y entidad de control. Asigna
+            responsables, controla fechas límite, conserva el PDF de respaldo y automatiza los recordatorios por correo.
+          </p>
         </div>
-        <Button type="submit" isLoading={isLoading}>
-          Entrar
-        </Button>
-        <div className="mt-3">
-          <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
-        </div>
-      </form>
+        <div className="login-foot">Laarcourier · Laar Seguridad · Virtual Create</div>
+      </aside>
+      <main className="login-main">
+        <form onSubmit={handleSubmit} className="login-card">
+          <h2>Acceso al sistema</h2>
+          <p className="login-sub">Ingrese con su usuario corporativo. Después podrá elegir la empresa.</p>
+          {error && <div className="alert alert-danger">{error}</div>}
+          <div className="mb-3">
+            <label className="form-label" htmlFor="identifier">
+              Usuario o correo
+            </label>
+            <input
+              id="identifier"
+              name="identifier"
+              className="form-control"
+              autoComplete="username"
+              value={form.identifier}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label" htmlFor="password">
+              Contraseña
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              className="form-control"
+              autoComplete="current-password"
+              value={form.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <Button type="submit" isLoading={isLoading}>
+            Ingresar
+          </Button>
+          <div className="mt-3">
+            <Link to="/forgot-password">¿Olvidó su contraseña?</Link>
+          </div>
+        </form>
+      </main>
     </div>
   );
 }
