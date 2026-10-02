@@ -1,227 +1,126 @@
-# Skelleton Base
+# Matriz Administrativa de Obligaciones
 
-Plantilla técnica reutilizable con la infraestructura transversal de
-cualquier proyecto: identidad institucional, autenticación, JWT, cifrado
-seguro de contraseñas, y administración de usuarios, roles y permisos.
-Resultado de particionar el repositorio `skelleton` (ver
-`docs/migration-report.md`).
+Sistema para controlar las obligaciones regulatorias, contractuales e
+internas de **Laarcourier Express S.A.**, **Laar Seguridad Cía. Ltda.** y
+**Virtual Create S.A.**: quién es responsable de cada una, cuándo vence, qué
+evidencia (PDF) la respalda, quién valida su cierre y qué recordatorios se
+envían.
 
-## 1. Descripción general
+Es la versión funcional del mockup aprobado. Está construida sobre la
+plantilla [`skelleton_base`](https://github.com/dpenarreta/skelleton_base)
+(autenticación, JWT, usuarios, roles, permisos, auditoría e identidad
+visual), cuyo historial se conserva en este repositorio. Los desarrollos
+nuevos van solo aquí.
 
-`skelleton_base` es un punto de partida clonable para nuevos proyectos:
-backend Django (patrón Modelo-Vista-Template) + API REST, frontend React, y
-SQL Server como base de datos. Contiene únicamente lo transversal a
-cualquier sistema — no incluye módulos de negocio (biblioteca de medios,
-formularios, páginas, avisos, footer, menús dinámicos), que quedaron fuera
-de esta partición a propósito.
+| Documento | Contenido |
+| --- | --- |
+| [Documento funcional](docs/matriz/documento-funcional.md) | Pantallas, campos, reglas de negocio, defectos del mockup y plan por fases |
+| [Estado de implementación](docs/matriz/implementacion.md) | Qué se construyó, decisiones tomadas y qué queda pendiente |
+| [API de la matriz](docs/matriz/api.md) | Endpoints, permisos y ejemplos |
+| [Despliegue](docs/matriz/despliegue.md) | Desarrollo local, producción con Docker, variables de entorno |
+| [Informe del mockup](docs/referencia/Informe_Funcionamiento_Matriz_Administrativa_3.docx) | Informe de funcionamiento original |
+| `docs/*.md` (template base) | Arquitectura, autenticación, roles, seguridad y QA de la plantilla |
 
-## 2. Tecnologías principales
+## Tecnologías
 
 | Componente | Tecnología |
 | --- | --- |
 | Backend | Python 3.12, Django 5.1, Django REST Framework |
 | Base de datos | SQL Server (`mssql-django` + `pyodbc`) |
-| Autenticación | JWT (`djangorestframework-simplejwt`) + sesiones propias |
-| Contraseñas | Hash Argon2 (gestionado por Django) |
-| Frontend | React 18, Vite, React Router |
-| Interfaz visual | Bootstrap 5 + Bootstrap Icons |
-| Pruebas | pytest / pytest-django / pytest-bdd (backend), Vitest (frontend) |
-| Contenedores | Docker / Docker Compose |
+| Autenticación | JWT + sesiones propias, contraseñas Argon2, bloqueo por intentos (template base) |
+| Frontend | React 18, Vite, React Router, Bootstrap 5 |
+| Evidencias | Sistema de archivos (volumen Docker) o bucket S3 compatible |
+| Correo | SMTP configurable por variables de entorno |
+| Reportes | Excel (`openpyxl`) y PDF (`reportlab`) |
+| Pruebas | pytest contra SQL Server real (146) y Vitest (21) |
 
-## 3. Arquitectura general del proyecto
+## Módulos
 
-Backend y frontend son proyectos independientes que se comunican por HTTP
-(`/api/v1/`). El backend sigue el patrón Modelo-Vista-Template con una capa
-de servicios explícita (la lógica de negocio nunca vive en las vistas). Ver
-`docs/architecture.md` para el detalle completo, incluidas las decisiones
-de alcance tomadas durante la partición.
+| Pantalla | Qué hace |
+| --- | --- |
+| Resumen | Incumplidas, en progreso, próximas a vencer (7 días) y finalizadas a tiempo o fuera de plazo; próximos vencimientos y cierres recientes |
+| Matriz | Períodos con búsqueda, filtros (área, entidad, responsable, prioridad, estado, etapa), agrupación, orden por urgencia, paginación y exportación a Excel/PDF |
+| Detalle del período | Pestañas General, Documentos, Recordatorios e Historial; enviar a validación, validar, devolver, rechazar evidencia, cambiar fecha con justificación, editar seguimiento |
+| Calendario | Vencimientos del mes coloreados por estado |
+| Documentos | Expedientes con evidencia y pendientes de evidencia |
+| Reportes | Cumplimiento a tiempo y tardío, por área y por entidad, con rango de fechas y exportación |
+| Configuración | Empresa, recordatorios y escalamiento, usuarios y roles por empresa, auditoría |
+| Administración del sistema (`/admin`) | Módulos del template base: usuarios, roles, permisos, identidad visual |
 
-## 4. Estructura de carpetas
+Un **programador** (`python manage.py run_scheduler`) genera los períodos
+siguientes, envía recordatorios (15, 7, 3 y 1 día antes y el día del
+vencimiento), escala al supervisor a los 2 días de atraso y reintenta los
+avisos fallidos, aunque nadie tenga la aplicación abierta.
 
-```
-skelleton_base/
-├── backend/
-│   ├── apps/{core,authentication,users,roles,permissions,branding}/
-│   ├── config/
-│   ├── requirements/
-│   └── manage.py
-├── frontend/
-│   └── src/{api,components,context,hooks,pages,routes,styles,utils}/
-├── tests/qa/
-│   ├── features/            # Criterios de aceptación en Gherkin
-│   ├── step_definitions/     # pytest-bdd
-│   ├── acceptance-criteria-traceability.md
-│   └── test-execution-report.md
-├── docs/
-├── database/
-├── docker-compose.yml
-└── docker-compose.prod.yml
-```
+## Roles por empresa
 
-## 5. Configuración base del entorno
+| Rol | Puede |
+| --- | --- |
+| Administrador | Todo, incluida la configuración y los usuarios de la empresa |
+| Responsable | Ver y gestionar solo los períodos donde es responsable o suplente; crear obligaciones de sus áreas |
+| Supervisor/Aprobador | Ver todo, cambiar fechas, validar, devolver y rechazar evidencia, exportar |
+| Auditor | Solo lectura y exportación |
 
-Copiar y completar dos archivos `.env.example`:
+Quien carga la evidencia o envía un período no puede validar ese mismo
+cierre. Todos los permisos se comprueban en el servidor.
 
-- `.env.example` (raíz) → variables de Docker Compose (SQL Server, build
-  args del frontend).
-- `backend/.env.example` → variables de Django (secretos, conexión a base
-  de datos, JWT, correo).
-- `frontend/.env.example` → variables de Vite.
+## Puesta en marcha rápida (desarrollo)
 
-Nunca commitear los `.env` reales (ya excluidos por `.gitignore`).
-
-## 6. Instalación local
-
-### Backend
+Requisitos: Python 3.12, Node 22, Docker y el driver ODBC 17 o 18 para SQL
+Server.
 
 ```bash
+cp .env.example .env                    # completar DB_PASSWORD
+cp backend/.env.example backend/.env    # completar SECRET_KEY, JWT_SECRET_KEY, DB_PASSWORD
+docker compose up -d mssql
+
 cd backend
-python -m venv .venv
-.venv/Scripts/activate      # Windows; en Linux/Mac: source .venv/bin/activate
+python -m venv .venv && .venv/Scripts/activate   # Linux/Mac: source .venv/bin/activate
 pip install -r requirements/dev.txt
-cp .env.example .env         # y completar los valores
+python scripts/ensure_database.py
 python manage.py migrate
 python manage.py createsuperuser
+DEMO_USERS_PASSWORD='<elegir una>' python manage.py seed_demo   # opcional: datos ficticios
 python manage.py runserver
-```
 
-### Frontend
-
-```bash
-cd frontend
+cd ../frontend
 npm install
 cp .env.example .env
 npm run dev
 ```
 
-### Base de datos (SQL Server vía Docker)
+Detalles, producción y variables de entorno en
+[docs/matriz/despliegue.md](docs/matriz/despliegue.md).
 
-```bash
-docker compose up -d mssql
-```
-
-Ver `docs/database.md` para crear la base de datos la primera vez y para
-los detalles de conexión.
-
-## 7. Scripts y comandos disponibles
+## Comandos
 
 | Comando | Dónde | Qué hace |
 | --- | --- | --- |
-| `python manage.py runserver` | `backend/` | Servidor de desarrollo |
-| `pytest` | `backend/` | Suite de pruebas del backend |
-| `ruff check .` / `black .` / `isort .` | `backend/` | Lint y formato |
-| `npm run dev` | `frontend/` | Servidor de desarrollo (Vite) |
-| `npm run build` | `frontend/` | Build de producción |
-| `npm test` | `frontend/` | Suite de pruebas (Vitest) |
-| `npm run lint` | `frontend/` | Lint (ESLint) |
-| `docker compose up -d mssql` | raíz | SQL Server de desarrollo |
-| `docker compose -f docker-compose.prod.yml up -d --build` | raíz | Stack completo de producción |
+| `python manage.py seed_catalogs` | `backend/` | Áreas, entidades de control y las 3 empresas (idempotente) |
+| `python manage.py seed_demo` | `backend/` | Usuarios, obligaciones y períodos ficticios (exige `DEMO_USERS_PASSWORD`) |
+| `python manage.py run_scheduler [--once]` | `backend/` | Programador de períodos, recordatorios, escalamiento y reintentos |
+| `pytest` | `backend/` | Pruebas del backend (necesita SQL Server) |
+| `ruff check . && black --check .` | `backend/` | Lint y formato |
+| `npm test` / `npm run lint` / `npm run build` | `frontend/` | Pruebas, lint y build |
+| `docker compose -f docker-compose.prod.yml up -d --build` | raíz | Stack completo: SQL Server, backend, worker y frontend |
 
-## 8. Base de datos
+## Estructura
 
-SQL Server. Ver `docs/database.md` para configuración, migraciones y
-relaciones entre usuarios, roles y permisos.
-
-## 9. Módulos o funcionalidades principales
-
-- **Autenticación y sesiones** (`apps.authentication`) — login, JWT,
-  refresh con detección de reuso, recuperación de contraseña.
-- **Usuarios** (`apps.users`) — CRUD administrativo, búsqueda/filtros,
-  activar/desactivar/bloquear, restablecimiento administrativo de
-  contraseña, protección del último administrador activo.
-- **Roles** (`apps.roles`) — CRUD sobre `auth.Group`.
-- **Permisos** (`apps.permissions`) — catálogo cerrado en código,
-  resolución de autorización.
-- **Configuración / identidad institucional** (`apps.branding`) — nombre,
-  logo, favicon, colores, tipografía, editable desde el panel
-  administrativo (módulo agregado deliberadamente más allá del mínimo
-  estricto de la partición, ver `docs/architecture.md`).
-- **Auditoría** (`apps.core`) — bitácora append-only de toda operación
-  administrativa relevante.
-
-## 10. APIs, rutas o interfaces internas
-
-Ver `docs/api-reference.md` para el listado completo de endpoints,
-métodos y permisos requeridos. Documentación interactiva en
-`/api/v1/schema/swagger-ui/`.
-
-## 11. Autenticación y permisos
-
-Ver `docs/authentication.md` y `docs/roles-and-permissions.md`.
-
-## 12. Estilos, templates y recursos estáticos
-
-El frontend usa Bootstrap 5 como base visual, con variables CSS propias
-(`frontend/src/styles/variables.css`) sobrescritas en runtime por el tema
-configurado en Configuración. Cada componente/página tiene su propio
-archivo `.css`. El backend usa templates de Django únicamente para el
-panel de administración nativo y los correos transaccionales
-(`backend/templates/emails/`) — la interfaz de usuario vive enteramente en
-el frontend React.
-
-## 13. Pruebas y calidad
-
-- Backend: 83 pruebas `pytest` (ver `backend/apps/*/tests/`).
-- Integración: 13 escenarios Gherkin conectados vía `pytest-bdd` (ver
-  `tests/qa/step_definitions/`).
-- Frontend: 10 pruebas `Vitest` (ver `frontend/tests/`).
-- Todos los criterios de aceptación están documentados como escenarios
-  Gherkin en `tests/qa/features/`, con trazabilidad completa en
-  `tests/qa/acceptance-criteria-traceability.md` y resultados reales de
-  ejecución en `tests/qa/test-execution-report.md`. Ver la estrategia
-  completa en `docs/qa-strategy.md`.
-
-## 14. Despliegue
-
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
 ```
-
-Levanta SQL Server, el backend (Gunicorn, migraciones automáticas al
-arrancar) y el frontend (build estático servido por nginx). Ver
-`docs/database.md` y `backend/entrypoint.sh`.
-
-## 15. Seguridad y buenas prácticas
-
-Ver `docs/security-review.md` para el checklist completo de controles de
-seguridad implementados y sus limitaciones conocidas (documentadas, no
-ocultas).
-
-## 16. Protección de datos personales según normativa de Ecuador
-
-Ver `docs/data-protection-review.md` — inventario de datos personales
-gestionados, controles existentes y recomendaciones. No constituye
-asesoría legal.
-
-## 17. Convenciones de desarrollo
-
-- Backend: vistas delgadas, lógica de negocio en `services.py`, nunca
-  acceso directo al ORM desde las vistas. `ruff` + `black` + `isort`
-  (ver `backend/pyproject.toml`).
-- Frontend: un componente por carpeta con su propio `.css`; servicios de
-  API separados de los componentes (`src/api/*.js`); permisos siempre
-  validados también en el backend, nunca solo en el cliente.
-- Todo criterio de aceptación nuevo se documenta como escenario Gherkin
-  (`tests/qa/features/`) con su identificador `AC-xxx`, nunca solo en este
-  README o en un comentario de código.
-
-## 18. Estado del proyecto
-
-Funcional y validado: migraciones aplicadas contra SQL Server real,
-backend y frontend iniciando correctamente, suites de pruebas en verde,
-build de producción exitoso, y una verificación manual en navegador que
-incluyó login real, creación de roles, y navegación completa del panel
-administrativo. Ver el detalle en `tests/qa/test-execution-report.md`.
-
-## 19. Recomendaciones para próximos mantenimientos
-
-1. Ejecutar `pip-audit`/`npm audit` con revisión manual antes de cada
-   release (ver limitaciones en `docs/security-review.md`).
-2. Definir una política de retención para `AuditLog`/`LoginAttempt` antes
-   de un despliegue con datos reales.
-3. Si se agrega un módulo de negocio nuevo, sumar sus permisos al catálogo
-   (`apps/permissions/catalog.py`) y documentar sus criterios de aceptación
-   como Gherkin desde el principio, no después.
-4. Mantener actualizada la matriz de trazabilidad
-   (`tests/qa/acceptance-criteria-traceability.md`) cada vez que se agregue
-   o cambie un criterio de aceptación.
+matriz_admin/
+├── backend/
+│   ├── apps/
+│   │   ├── core, authentication, users, roles, permissions, branding   # template base
+│   │   ├── organizations/   # empresas, sucursales, áreas, entidades, roles por empresa
+│   │   ├── obligations/     # obligaciones, períodos, evidencias, estados, reportes
+│   │   └── reminders/       # recordatorios, escalamiento, programador
+│   ├── templates/emails/    # correos (recordatorio, escalamiento)
+│   └── scripts/             # ensure_database.py, wait_for_db.py
+├── frontend/src/
+│   ├── components/matriz/   # AppShell, PeriodDrawer, modales, visor PDF
+│   ├── pages/Matriz/        # Resumen, Matriz, Calendario, Documentos, Reportes, Configuración
+│   └── pages/Admin/         # panel administrativo del template base
+├── docs/matriz/             # documentación de este proyecto
+├── docker-compose.yml       # SQL Server para desarrollo
+└── docker-compose.prod.yml  # stack completo de producción
+```
