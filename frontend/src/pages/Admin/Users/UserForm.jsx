@@ -5,6 +5,7 @@ import { adminUsersService } from "../../../api/adminUsersService";
 import { Button } from "../../../components/common/Button/Button";
 import { ConfirmDialog } from "../../../components/common/ConfirmDialog/ConfirmDialog";
 import { usePermission } from "../../../hooks/usePermission";
+import { UserAccessSections } from "./UserAccessSections";
 import "./UserForm.css";
 
 const EMPTY_FORM = { username: "", email: "", password: "", first_name: "", last_name: "" };
@@ -234,6 +235,8 @@ export function UserForm() {
           </button>
         </div>
       )}
+
+      {isEditing && <UserAccessSections userId={id} />}
 
       <ConfirmDialog
         isOpen={isConfirmResetOpen}

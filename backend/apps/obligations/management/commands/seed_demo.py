@@ -35,6 +35,7 @@ from apps.reminders.services import get_config
 from apps.users.models import User
 
 R = RoleName
+SYSTEM_ADMIN_ROLE = "Superusuario"
 
 # (usuario, nombre, apellido, rol, áreas que atiende como responsable)
 PEOPLE = {
@@ -322,6 +323,10 @@ class Command(BaseCommand):
             Membership.objects.get_or_create(
                 user=auditor, company=company, defaults={"role": default_role(R.AUDITOR)}
             )
+            if company.code == "LC" and admin is not None:
+                # Administrador del sistema de la demo: rol del template base
+                # con todo el catálogo (usuarios, roles, empresas, catálogos…).
+                admin.groups.add(default_role(SYSTEM_ADMIN_ROLE))
             if company.general_manager_id is None:
                 company.general_manager = admin
                 company.save(update_fields=["general_manager", "updated_at"])

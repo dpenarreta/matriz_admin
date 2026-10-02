@@ -20,6 +20,7 @@ export const matrizService = {
   catalogs: (companyId) => apiClient.get(`/companies/${companyId}/catalogs/`).then(data),
   people: (companyId) => apiClient.get(`/companies/${companyId}/people/`).then(data),
   members: (companyId) => apiClient.get(`/companies/${companyId}/members/`).then(data),
+  roles: (companyId) => apiClient.get(`/companies/${companyId}/roles/`).then(data),
   addMember: (companyId, payload) =>
     apiClient.post(`/companies/${companyId}/members/`, payload).then(data),
   updateMember: (companyId, memberId, payload) =>

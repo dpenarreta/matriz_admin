@@ -17,7 +17,9 @@ import { ResumenPage } from "../pages/Matriz/ResumenPage";
 import { ChangePasswordRequired } from "../pages/PasswordReset/ChangePasswordRequired";
 import { ForgotPassword } from "../pages/PasswordReset/ForgotPassword";
 import { ResetPassword } from "../pages/PasswordReset/ResetPassword";
+import { CatalogsPage } from "../pages/Admin/Catalogos/CatalogsPage";
 import { ConfiguracionPage } from "../pages/Admin/Configuracion/ConfiguracionPage";
+import { CompaniesPage } from "../pages/Admin/Empresas/CompaniesPage";
 import { PermissionsPage } from "../pages/Admin/Permissions/PermissionsPage";
 import { Register } from "../pages/Register/Register";
 import { RoleForm } from "../pages/Admin/Roles/RoleForm";
@@ -123,6 +125,22 @@ export function AppRoutes() {
           element={
             <RequirePermission permission={PERMISOS_VER}>
               <PermissionsPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="empresas"
+          element={
+            <RequirePermission permission="empresas.ver">
+              <CompaniesPage />
+            </RequirePermission>
+          }
+        />
+        <Route
+          path="catalogos"
+          element={
+            <RequirePermission permission="catalogos.ver">
+              <CatalogsPage />
             </RequirePermission>
           }
         />

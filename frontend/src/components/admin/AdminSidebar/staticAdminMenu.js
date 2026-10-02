@@ -14,6 +14,12 @@
  */
 export const ADMIN_MENU = [
   {
+    id: "matriz",
+    name: "Matriz de obligaciones",
+    icon: "building",
+    path: "/resumen",
+  },
+  {
     id: "usuarios",
     name: "Usuarios",
     icon: "people",
@@ -33,6 +39,20 @@ export const ADMIN_MENU = [
     icon: "key",
     path: "/admin/permissions",
     permission: "permisos.ver",
+  },
+  {
+    id: "empresas",
+    name: "Empresas",
+    icon: "buildings",
+    path: "/admin/empresas",
+    permission: "empresas.ver",
+  },
+  {
+    id: "catalogos",
+    name: "Catálogos",
+    icon: "tags",
+    path: "/admin/catalogos",
+    permission: "catalogos.ver",
   },
   {
     id: "configuracion",

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { errorMessage, matrizService } from "../../api/matrizService";
 import { Icon } from "../../components/common/Icon/Icon";
 import { useCompany } from "../../context/CompanyContext";
 import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../hooks/useAuth";
 import { fmtDateTime } from "../../utils/matrizFormat";
 
 const TIMEZONES = [
@@ -105,7 +106,7 @@ function CompanyTab() {
   return (
     <div className="mz-card">
       <div className="mz-card-body">
-        <LockedNote locked={locked} text={`Su rol (${company.role_label}) puede consultar esta configuración, pero solo un Administrador puede modificarla.`} />
+        <LockedNote locked={locked} text={`Su rol (${company.role_label}) puede consultar esta configuración; modificarla requiere el permiso matriz.configurar.`} />
         <fieldset disabled={locked} className="mz-field-grid">
           <div className="mz-field">
             <label htmlFor="cf-legal">Razón social</label>
@@ -225,7 +226,7 @@ function RemindersConfigTab() {
           <h3>Anticipación de los avisos</h3>
         </div>
         <div className="mz-card-body">
-          <LockedNote locked={locked} text="Solo un Administrador puede editar estos parámetros." />
+          <LockedNote locked={locked} text="Editar estos parámetros requiere el permiso matriz.configurar." />
           {offsets.map((offset) => (
             <div key={offset} className="mz-reminder-row">
               <Icon name="envelope" />
@@ -325,15 +326,21 @@ function RemindersConfigTab() {
 
 function MembersTab() {
   const { company, reload } = useCompany();
+  const { user } = useAuth();
   const notify = useToast();
   const [members, setMembers] = useState(null);
-  const [form, setForm] = useState({ identifier: "", role: "responsable" });
+  const [roles, setRoles] = useState([]);
+  const [form, setForm] = useState({ identifier: "", role_id: "" });
 
   const load = useCallback(() => matrizService.members(company.id).then(setMembers), [company.id]);
 
   useEffect(() => {
     load();
-  }, [load]);
+    matrizService.roles(company.id).then((list) => {
+      setRoles(list);
+      setForm((current) => ({ ...current, role_id: current.role_id || list[0]?.id || "" }));
+    });
+  }, [load, company.id]);
 
   async function act(action, message) {
     try {
@@ -347,6 +354,22 @@ function MembersTab() {
   }
 
   if (!members) return <p className="mz-faint">Cargando…</p>;
+  const canEditRoles = user?.permissions?.includes("roles.editar");
+
+  const roleSelect = (value, onChange, label) => (
+    <select
+      className="form-select form-select-sm mz-role-select"
+      value={value}
+      aria-label={label}
+      onChange={(e) => onChange(Number(e.target.value))}
+    >
+      {roles.map((role) => (
+        <option key={role.id} value={role.id}>
+          {role.name}
+        </option>
+      ))}
+    </select>
+  );
 
   return (
     <div className="mz-card">
@@ -362,19 +385,14 @@ function MembersTab() {
             onChange={(e) => setForm({ ...form, identifier: e.target.value })}
             aria-label="Usuario o correo"
           />
-          <select className="form-select form-select-sm" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} aria-label="Rol">
-            <option value="administrador">Administrador</option>
-            <option value="responsable">Responsable</option>
-            <option value="supervisor">Supervisor/Aprobador</option>
-            <option value="auditor">Auditor</option>
-          </select>
+          {roleSelect(form.role_id, (roleId) => setForm({ ...form, role_id: roleId }), "Rol")}
           <button
             type="button"
             className="btn btn-primary btn-sm"
-            disabled={!form.identifier.trim()}
+            disabled={!form.identifier.trim() || !form.role_id}
             onClick={() =>
               act(() => matrizService.addMember(company.id, form), "Usuario agregado").then(() =>
-                setForm({ identifier: "", role: "responsable" })
+                setForm({ ...form, identifier: "" })
               )
             }
           >
@@ -382,7 +400,8 @@ function MembersTab() {
           </button>
         </div>
         <p className="mz-faint mz-small">
-          Las cuentas se crean en Administración del sistema → Usuarios. Aquí se asigna su rol en esta empresa.
+          Las cuentas se crean en Administración del sistema → Usuarios. Aquí se asigna su rol en esta empresa. Los roles
+          y sus permisos se configuran en Administración del sistema → Roles.
         </p>
         {members.map((member) => (
           <div key={member.id} className="mz-doc mz-doc--plain">
@@ -394,17 +413,11 @@ function MembersTab() {
                 {member.areas.length ? ` · Áreas: ${member.areas.map((area) => area.code).join(", ")}` : ""}
               </span>
             </div>
-            <select
-              className="form-select form-select-sm mz-role-select"
-              value={member.role}
-              aria-label={`Rol de ${member.user.full_name}`}
-              onChange={(e) => act(() => matrizService.updateMember(company.id, member.id, { role: e.target.value }), "Rol actualizado")}
-            >
-              <option value="administrador">Administrador</option>
-              <option value="responsable">Responsable</option>
-              <option value="supervisor">Supervisor/Aprobador</option>
-              <option value="auditor">Auditor</option>
-            </select>
+            {roleSelect(
+              member.role.id,
+              (roleId) => act(() => matrizService.updateMember(company.id, member.id, { role_id: roleId }), "Rol actualizado"),
+              `Rol de ${member.user.full_name}`
+            )}
             <button
               type="button"
               className="mz-icon-btn ms-2"
@@ -415,46 +428,58 @@ function MembersTab() {
             </button>
           </div>
         ))}
-        <PermissionMatrix />
+        <PermissionMatrix roles={roles} />
+        {canEditRoles && (
+          <Link to="/admin/roles" className="btn btn-outline-secondary btn-sm mt-2">
+            <Icon name="shield-lock" /> Configurar roles y permisos
+          </Link>
+        )}
       </div>
     </div>
   );
 }
 
-const PERMISSION_ROWS = [
-  ["Ver todas las obligaciones", [true, false, true, true]],
-  ["Crear obligaciones", [true, true, false, false]],
-  ["Editar el seguimiento (lo propio, para el Responsable)", [true, true, false, false]],
-  ["Cambiar la fecha de vencimiento", [true, false, true, false]],
-  ["Cargar evidencia y enviar a validación", [true, true, false, false]],
-  ["Validar, devolver y rechazar evidencia", [true, false, true, false]],
-  ["Configurar la empresa y los recordatorios", [true, false, false, false]],
-  ["Gestionar usuarios y roles de la empresa", [true, false, false, false]],
-  ["Exportar y ver auditoría", [true, false, true, true]],
+const MATRIX_PERMISSIONS = [
+  ["matriz.ver_todas", "Ver todas las obligaciones (sin esto, solo las propias)"],
+  ["matriz.crear", "Crear obligaciones"],
+  ["matriz.editar", "Editar el seguimiento"],
+  ["matriz.cambiar_fecha", "Cambiar la fecha de vencimiento"],
+  ["matriz.cargar", "Cargar evidencia"],
+  ["matriz.enviar", "Enviar a validación"],
+  ["matriz.validar", "Validar, devolver y rechazar evidencia"],
+  ["matriz.recordar", "Reenviar recordatorios"],
+  ["matriz.exportar", "Exportar"],
+  ["matriz.ver_auditoria", "Ver auditoría"],
+  ["matriz.configurar", "Configurar la empresa y los recordatorios"],
+  ["matriz.gestionar_miembros", "Gestionar usuarios y roles de la empresa"],
 ];
 
-function PermissionMatrix() {
+/** Tabla de permisos de los roles actuales, leída del backend (no fija). */
+function PermissionMatrix({ roles }) {
+  if (!roles.length) return null;
   return (
     <div className="table-responsive mt-3">
       <table className="mz-perm-table">
         <thead>
           <tr>
-            <th>Acción</th>
-            <th>Administrador</th>
-            <th>Responsable</th>
-            <th>Supervisor/Aprobador</th>
-            <th>Auditor</th>
+            <th>Permiso</th>
+            {roles.map((role) => (
+              <th key={role.id}>{role.name}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {PERMISSION_ROWS.map(([label, values]) => (
-            <tr key={label}>
+          {MATRIX_PERMISSIONS.map(([codename, label]) => (
+            <tr key={codename}>
               <td>{label}</td>
-              {values.map((value, index) => (
-                <td key={index} className={value ? "mz-ok" : "mz-faint"}>
-                  {value ? "✓" : "—"}
-                </td>
-              ))}
+              {roles.map((role) => {
+                const has = role.permission_codenames.includes(codename);
+                return (
+                  <td key={role.id} className={has ? "mz-ok" : "mz-faint"}>
+                    {has ? "✓" : "—"}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

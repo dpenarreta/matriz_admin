@@ -10,23 +10,13 @@ documentación interactiva está en `/api/v1/schema/swagger-ui/`.
 - El acceso depende de la **membresía** del usuario en la empresa del recurso.
   Sin membresía, la empresa o el período responden **404**, para no revelar
   que existen.
-- Cada acción exige una **capacidad** del rol (tabla abajo). Si falta,
-  responde **403** y queda registrado en la auditoría (`access_denied`).
-- El **Responsable** solo ve y modifica los períodos donde es responsable o
-  suplente.
-- Un superusuario de Django actúa como Administrador en todas las empresas.
-
-| Capacidad | Administrador | Responsable | Supervisor | Auditor |
-| --- | --- | --- | --- | --- |
-| `ver_todas` | ✓ | — | ✓ | ✓ |
-| `crear` | ✓ | ✓ (sus áreas) | — | — |
-| `editar` | ✓ | ✓ (lo propio) | — | — |
-| `cambiar_fecha` | ✓ | — | ✓ | — |
-| `cargar`, `enviar` | ✓ | ✓ (lo propio) | — | — |
-| `validar` | ✓ | — | ✓ | — |
-| `recordar` | ✓ | ✓ (lo propio) | ✓ | — |
-| `configurar`, `gestionar_miembros` | ✓ | — | — | — |
-| `exportar`, `ver_auditoria` | ✓ | — | ✓ | ✓ |
+- Cada acción exige un permiso `matriz.<capacidad>` en el **rol de la
+  membresía** (un rol editable del template base). Si falta, responde **403**
+  y queda registrado en la auditoría (`access_denied`).
+- Sin `matriz.ver_todas`, la persona solo ve y actúa sobre los períodos donde
+  es responsable o suplente.
+- Un superusuario de Django tiene todos los permisos en todas las empresas.
+- Permisos y roles sembrados: [roles-y-permisos.md](roles-y-permisos.md).
 
 ## Empresas y personas
 
@@ -36,9 +26,10 @@ documentación interactiva está en `/api/v1/schema/swagger-ui/`.
 | `GET companies/{id}/` | membresía | Datos de la empresa y del rol del usuario |
 | `PATCH companies/{id}/` | `configurar` | Razón social, nombre corto, país, actividad, `timezone` (IANA), `color`, `compliance_date_basis` (`validation`/`submission`), `general_manager_id` |
 | `GET companies/{id}/people/` | membresía | Personas con rol (para elegir responsable, suplente, etc.) |
-| `GET/POST companies/{id}/members/` | `gestionar_miembros` | Listar o agregar rol: `{"identifier": "usuario o correo", "role": "responsable", "area_ids": [1]}` |
-| `PATCH/DELETE companies/{id}/members/{mid}/` | `gestionar_miembros` | Cambiar rol o áreas, o quitar. No permite dejar la empresa sin Administrador |
-| `GET companies/{id}/catalogs/` | membresía | Áreas, entidades, sucursales, tipos, periodicidades, prioridades, etapas y roles |
+| `GET companies/{id}/roles/` | `gestionar_miembros` | Roles asignables (los que tienen algún permiso `matriz.*`), con sus permisos |
+| `GET/POST companies/{id}/members/` | `gestionar_miembros` | Listar o agregar rol: `{"identifier": "usuario o correo", "role_id": 2, "area_ids": [1]}` |
+| `PATCH/DELETE companies/{id}/members/{mid}/` | `gestionar_miembros` | Cambiar `role_id` o `area_ids`, o quitar. La empresa no puede quedar sin nadie con `matriz.gestionar_miembros` |
+| `GET companies/{id}/catalogs/` | membresía | Áreas, entidades, sucursales, tipos, periodicidades, prioridades y etapas |
 
 ## Vistas
 
@@ -102,3 +93,23 @@ horaria de la empresa:
 | `POST periods/{id}/reminders/send/` | `recordar` | Reenvío manual al responsable (y suplente) |
 | `GET periods/{id}/reminders/preview/?kind=` | visibilidad | `subject`, `to`, `text` y `html` del correo |
 | `POST notifications/{id}/retry/` | `recordar` | Reintenta un aviso fallido; la original queda "Reintentado" |
+
+## Administración del sistema
+
+Usan permisos del catálogo (`HasModulePermission`), igual que usuarios y
+roles del template base, no la membresía por empresa.
+
+| Método y ruta | Permiso | Descripción |
+| --- | --- | --- |
+| `GET/POST admin/companies/` | `empresas.ver` / `empresas.editar` | Listar o crear empresas (`code`, `legal_name`, `short_name`, `country`, `activity`, `timezone`, `color`, `compliance_date_basis`, `general_manager_id`, `is_active`, `branches: ["Matriz"]`) |
+| `GET/PATCH admin/companies/{id}/` | `empresas.ver` / `empresas.editar` | Ver o editar; las empresas se desactivan (`is_active`), no se eliminan |
+| `POST admin/companies/{id}/branches/` | `empresas.editar` | Agregar sucursal |
+| `PATCH admin/companies/{id}/branches/{bid}/` | `empresas.editar` | Renombrar o desactivar sucursal |
+| `GET/POST admin/catalogs/{areas\|control-entities}/` | `catalogos.ver` / `catalogos.editar` | Listar o crear (`code`, `name`) |
+| `PATCH/DELETE admin/catalogs/{tipo}/{id}/` | `catalogos.editar` | Editar o eliminar; no se elimina lo que usa alguna obligación |
+| `GET admin/matrix-roles/` | `usuarios.ver` | Roles con permisos `matriz.*` |
+| `GET/PUT admin/users/{id}/memberships/` | `usuarios.ver` / `usuarios.editar` | Roles por empresa de un usuario. `PUT {"memberships": [{"company_id", "role_id", "area_ids"}]}` reemplaza la lista completa |
+
+Los roles (`admin/roles/`), usuarios (`admin/users/`, incluidos
+`roles/` y `permissions/`) y el catálogo (`admin/permissions/`) son los del
+template base (`docs/api-reference.md`).

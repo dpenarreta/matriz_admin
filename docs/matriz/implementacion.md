@@ -20,7 +20,7 @@ usuarios (UAT) y puesta en marcha (F8).
 | F4 Evidencias y cierre | Hecho |
 | F5 Recordatorios y escalamiento | Hecho (falta configurar el SMTP real) |
 | F6 Reportes, calendario y auditoría | Hecho |
-| F7 Pruebas | Automáticas hechas (146 backend + 21 frontend + prueba manual en navegador); UAT pendiente |
+| F7 Pruebas | Automáticas hechas (162 backend + 26 frontend + prueba manual en navegador); UAT pendiente |
 | F8 Puesta en marcha | Pendiente |
 
 ## Defectos del mockup (sección 8)
@@ -55,7 +55,7 @@ posible, se dejó configurable. Hay que confirmarlas con el negocio.
 
 | Decisión | Valor implementado | Dónde se cambia |
 | --- | --- | --- |
-| Quién cambia la fecha de vencimiento | Administrador y Supervisor/Aprobador | `ROLE_CAPABILITIES` en `apps/organizations/access.py` |
+| Quién cambia la fecha de vencimiento | Administrador y Supervisor/Aprobador | Administración → Roles: permiso `matriz.cambiar_fecha` |
 | Qué fecha cuenta como cumplimiento | La de validación (como el mockup) | Configuración → Empresa ("Fecha que cuenta como cumplimiento") |
 | Escalamiento | Al supervisor (o al aprobador si no hay), a los 2 días, una sola vez | Configuración → Recordatorios (días y repetición) |
 | Copia al suplente | Sí | Configuración → Recordatorios |
@@ -63,6 +63,16 @@ posible, se dejó configurable. Hay que confirmarlas con el negocio.
 | Conservación de documentos | Sin borrado físico; el plazo de retención no está automatizado | Pendiente de legal |
 | SSO | Usuario y clave propios (template base) | Pendiente |
 | Inicio de sesión y empresa | Se elige la empresa después de iniciar sesión, para no revelar qué empresas existen | — |
+
+## Roles y permisos configurables
+
+Los roles del mockup ya no están en el código: son roles editables del
+template base con permisos `matriz.*` del catálogo, y se asignan por empresa.
+Ver [roles-y-permisos.md](roles-y-permisos.md). La administración del sistema
+suma las pantallas Empresas (con sucursales) y Catálogos (áreas y entidades),
+y el formulario de usuario asigna los roles del sistema, los permisos directos
+y los roles por empresa. Antes, el formulario del template base no tenía esas
+secciones, aunque la API las admitía.
 
 ## Diferencias con el mockup
 
@@ -103,7 +113,11 @@ Encontradas al integrar; se dejaron corregidas aquí:
 5. `entrypoint.sh` con CRLF (clon en Windows) impedía arrancar el contenedor.
 6. El primer arranque fallaba porque SQL Server no crea la base.
 
-Conviene llevar las correcciones 1 a 6 también a `skelleton_base`.
+7. El rol "Superusuario" no se resincronizaba con permisos nuevos:
+   `post_migrate` no se emite para apps sin modelos (`roles`).
+8. Un token vencido en el navegador impedía volver a iniciar sesión.
+
+Conviene llevar las correcciones 1 a 8 también a `skelleton_base`.
 
 ## Pendiente
 

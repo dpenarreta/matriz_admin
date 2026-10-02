@@ -16,6 +16,7 @@ nuevos van solo aquí.
 | --- | --- |
 | [Documento funcional](docs/matriz/documento-funcional.md) | Pantallas, campos, reglas de negocio, defectos del mockup y plan por fases |
 | [Estado de implementación](docs/matriz/implementacion.md) | Qué se construyó, decisiones tomadas y qué queda pendiente |
+| [Roles y permisos](docs/matriz/roles-y-permisos.md) | Catálogo de permisos, roles editables y roles por empresa |
 | [API de la matriz](docs/matriz/api.md) | Endpoints, permisos y ejemplos |
 | [Despliegue](docs/matriz/despliegue.md) | Desarrollo local, producción con Docker, variables de entorno |
 | [Informe del mockup](docs/referencia/Informe_Funcionamiento_Matriz_Administrativa_3.docx) | Informe de funcionamiento original |
@@ -32,7 +33,7 @@ nuevos van solo aquí.
 | Evidencias | Sistema de archivos (volumen Docker) o bucket S3 compatible |
 | Correo | SMTP configurable por variables de entorno |
 | Reportes | Excel (`openpyxl`) y PDF (`reportlab`) |
-| Pruebas | pytest contra SQL Server real (146) y Vitest (21) |
+| Pruebas | pytest contra SQL Server real (162) y Vitest (26) |
 
 ## Módulos
 
@@ -45,24 +46,27 @@ nuevos van solo aquí.
 | Documentos | Expedientes con evidencia y pendientes de evidencia |
 | Reportes | Cumplimiento a tiempo y tardío, por área y por entidad, con rango de fechas y exportación |
 | Configuración | Empresa, recordatorios y escalamiento, usuarios y roles por empresa, auditoría |
-| Administración del sistema (`/admin`) | Módulos del template base: usuarios, roles, permisos, identidad visual |
+| Administración del sistema (`/admin`) | Usuarios (con roles del sistema, permisos directos y roles por empresa), roles, permisos, empresas y sucursales, catálogos (áreas y entidades), identidad visual |
 
 Un **programador** (`python manage.py run_scheduler`) genera los períodos
 siguientes, envía recordatorios (15, 7, 3 y 1 día antes y el día del
 vencimiento), escala al supervisor a los 2 días de atraso y reintenta los
 avisos fallidos, aunque nadie tenga la aplicación abierta.
 
-## Roles por empresa
+## Roles y permisos configurables
 
-| Rol | Puede |
-| --- | --- |
-| Administrador | Todo, incluida la configuración y los usuarios de la empresa |
-| Responsable | Ver y gestionar solo los períodos donde es responsable o suplente; crear obligaciones de sus áreas |
-| Supervisor/Aprobador | Ver todo, cambiar fechas, validar, devolver y rechazar evidencia, exportar |
-| Auditor | Solo lectura y exportación |
+Todo el acceso usa el sistema del template base: un **catálogo de permisos**
+(con los módulos `matriz`, `empresas` y `catalogos` agregados), **roles
+editables** en Administración → Roles y **usuarios** en Administración →
+Usuarios. El formulario de usuario asigna los roles del sistema, los permisos
+directos y el **rol de la persona en cada empresa**.
 
-Quien carga la evidencia o envía un período no puede validar ese mismo
-cierre. Todos los permisos se comprueban en el servidor.
+Se siembran 4 roles editables (Administrador, Responsable,
+Supervisor/Aprobador y Auditor), y se pueden crear otros con cualquier
+combinación de permisos. Sin `matriz.ver_todas`, una persona solo ve y actúa
+sobre sus propios períodos. Quien carga la evidencia o envía un período no
+puede validar ese mismo cierre. Todo se comprueba en el servidor. Detalle en
+[docs/matriz/roles-y-permisos.md](docs/matriz/roles-y-permisos.md).
 
 ## Puesta en marcha rápida (desarrollo)
 
