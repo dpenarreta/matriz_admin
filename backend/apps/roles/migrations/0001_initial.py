@@ -18,7 +18,18 @@ def seed_superusuario_role(apps, schema_editor):
     Permission = apps.get_model("auth", "Permission")
     ContentType = apps.get_model("contenttypes", "ContentType")
 
-    content_type = ContentType.objects.get(app_label="permissions", model="modulepermission")
+    # En una base nueva, Django crea ContentType y Permission recién en
+    # `post_migrate` (después de todas las migraciones), así que aquí se
+    # crean explícitamente si aún no existen, a partir del estado histórico
+    # del modelo ancla.
+    content_type, _ = ContentType.objects.get_or_create(
+        app_label="permissions", model="modulepermission"
+    )
+    ModulePermission = apps.get_model("permissions", "ModulePermission")
+    for codename, name in ModulePermission._meta.permissions:
+        Permission.objects.get_or_create(
+            content_type=content_type, codename=codename, defaults={"name": name}
+        )
     group, _ = Group.objects.get_or_create(name=DEFAULT_ROLE_NAME)
     group.permissions.set(Permission.objects.filter(content_type=content_type))
 
