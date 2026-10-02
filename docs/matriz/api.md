@@ -94,7 +94,7 @@ horaria de la empresa:
 | `GET periods/{id}/reminders/preview/?kind=` | visibilidad | `subject`, `to`, `text` y `html` del correo |
 | `POST notifications/{id}/retry/` | `recordar` | Reintenta un aviso fallido; la original queda "Reintentado" |
 
-## Administración del sistema
+## la sección Administración del menú
 
 Usan permisos del catálogo (`HasModulePermission`), igual que usuarios y
 roles del template base, no la membresía por empresa.

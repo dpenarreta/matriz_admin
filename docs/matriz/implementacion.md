@@ -68,8 +68,10 @@ posible, se dejó configurable. Hay que confirmarlas con el negocio.
 
 Los roles del mockup ya no están en el código: son roles editables del
 template base con permisos `matriz.*` del catálogo, y se asignan por empresa.
-Ver [roles-y-permisos.md](roles-y-permisos.md). La administración del sistema
-suma las pantallas Empresas (con sucursales) y Catálogos (áreas y entidades),
+Ver [roles-y-permisos.md](roles-y-permisos.md). Los módulos del template base se integraron en la interfaz de la matriz
+(sección Administración del menú lateral, rutas `/sistema/...`; las rutas
+antiguas `/admin/...` redirigen). Se suman las pantallas Empresas (con
+sucursales), Catálogos (áreas y entidades) y Auditoría del sistema,
 y el formulario de usuario asigna los roles del sistema, los permisos directos
 y los roles por empresa. Antes, el formulario del template base no tenía esas
 secciones, aunque la API las admitía.

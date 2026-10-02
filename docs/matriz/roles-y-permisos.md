@@ -2,13 +2,16 @@
 
 La matriz usa el mismo sistema de roles y permisos del template base
 (`docs/roles-and-permissions.md`). No hay listas fijas en el código: todo
-se configura en **Administración del sistema**.
+se configura en la sección **Administración** del menú lateral de la matriz,
+que reúne los módulos del template base (usuarios, roles, permisos,
+empresas, catálogos, identidad visual y auditoría) en la misma interfaz.
+Cada opción aparece solo para quien tiene su permiso.
 
 ## Tres niveles de acceso
 
 | Nivel | Dónde se asigna | Qué controla |
 | --- | --- | --- |
-| Roles del sistema (`user.groups`) | Administración → Usuarios → usuario → "Roles del sistema" | Administración del sistema: usuarios, roles, permisos, empresas, catálogos, identidad visual, auditoría técnica |
+| Roles del sistema (`user.groups`) | Administración → Usuarios → usuario → "Roles del sistema" | Los módulos de Administración: usuarios, roles, permisos, empresas, catálogos, identidad visual, auditoría técnica |
 | Permisos directos (`user.user_permissions`) | Administración → Usuarios → usuario → "Permisos directos" | Lo mismo que el nivel anterior, sin pasar por un rol |
 | Roles por empresa (membresía) | Administración → Usuarios → usuario → "Roles por empresa", o Matriz → Configuración → Usuarios y roles | Qué puede hacer en la matriz **de esa empresa**: los permisos `matriz.*` del rol |
 

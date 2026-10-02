@@ -42,7 +42,7 @@ export function RolesList() {
       <Breadcrumbs items={BREADCRUMB_ITEMS} />
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Roles</h2>
-        <Link to="/admin/roles/new" className="btn btn-primary btn-sm">
+        <Link to="/sistema/roles/nuevo" className="btn btn-primary btn-sm">
           Nuevo rol
         </Link>
       </div>
@@ -65,7 +65,7 @@ export function RolesList() {
                 <td>{role.permission_codenames.length}</td>
                 <td>
                   <div className="d-flex gap-2">
-                    <Link to={`/admin/roles/${role.id}`} className="btn btn-outline-secondary btn-sm">
+                    <Link to={`/sistema/roles/${role.id}`} className="btn btn-outline-secondary btn-sm">
                       Editar
                     </Link>
                     <button

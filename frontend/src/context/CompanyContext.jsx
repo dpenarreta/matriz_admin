@@ -25,6 +25,9 @@ export function CompanyProvider({ children }) {
   const [companies, setCompanies] = useState([]);
   const [activeId, setActiveId] = useState(readStoredId);
   const [isLoading, setIsLoading] = useState(true);
+  // Para qué usuario se cargaron las empresas: evita que, justo después del
+  // login, se lea "sin empresas" antes de que termine la primera carga.
+  const [loadedFor, setLoadedFor] = useState(null);
   // Contador que sube tras cada acción que cambia datos (cerrar, cargar,
   // crear…): las vistas lo usan como dependencia para recargar.
   const [dataVersion, setDataVersion] = useState(0);
@@ -45,7 +48,9 @@ export function CompanyProvider({ children }) {
 
   useEffect(() => {
     if (user) {
-      reload();
+      reload()
+        .catch(() => {})
+        .finally(() => setLoadedFor(user.id));
     } else {
       setCompanies([]);
       setIsLoading(false);
@@ -68,8 +73,17 @@ export function CompanyProvider({ children }) {
   );
 
   const value = useMemo(
-    () => ({ companies, company, setActiveId, can, isLoading, reload, dataVersion, refreshData }),
-    [companies, company, can, isLoading, reload, dataVersion, refreshData]
+    () => ({
+      companies,
+      company,
+      setActiveId,
+      can,
+      isLoading: isLoading || Boolean(user && loadedFor !== user.id),
+      reload,
+      dataVersion,
+      refreshData,
+    }),
+    [companies, company, can, isLoading, user, loadedFor, reload, dataVersion, refreshData]
   );
 
   return <CompanyContext.Provider value={value}>{children}</CompanyContext.Provider>;

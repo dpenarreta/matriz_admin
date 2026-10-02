@@ -50,7 +50,7 @@ El comando se niega a correr con `DEBUG=False`, salvo con `--allow-production`.
 | Laar Seguridad | `veronica.idrovo` | `andrea.andrade` | `byron.cevallos` | `paola.salcedo` |
 | Virtual Create | `andres.buestan` | `camila.vega` | `andrea.cevallos` | `fernando.moreno` |
 
-`auditoria.externa` es Auditor en las 3 empresas. `rodrigo.salcedo` tiene además el rol del sistema "Superusuario", para entrar a Administración del sistema.
+`auditoria.externa` es Auditor en las 3 empresas. `rodrigo.salcedo` tiene además el rol del sistema "Superusuario", para entrar a la sección Administración del menú.
 
 ## Producción con Docker
 

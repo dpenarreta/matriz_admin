@@ -46,7 +46,7 @@ nuevos van solo aquí.
 | Documentos | Expedientes con evidencia y pendientes de evidencia |
 | Reportes | Cumplimiento a tiempo y tardío, por área y por entidad, con rango de fechas y exportación |
 | Configuración | Empresa, recordatorios y escalamiento, usuarios y roles por empresa, auditoría |
-| Administración del sistema (`/admin`) | Usuarios (con roles del sistema, permisos directos y roles por empresa), roles, permisos, empresas y sucursales, catálogos (áreas y entidades), identidad visual |
+| Administración (en el mismo menú, según permisos) | Usuarios (con roles del sistema, permisos directos y roles por empresa), roles, permisos, empresas y sucursales, catálogos, identidad visual y auditoría del sistema. Son los módulos del template base integrados en la interfaz de la matriz |
 
 Un **programador** (`python manage.py run_scheduler`) genera los períodos
 siguientes, envía recordatorios (15, 7, 3 y 1 día antes y el día del

@@ -14,9 +14,9 @@ import { IdentidadTab } from "./IdentidadTab";
 import "./ConfiguracionPage.css";
 
 const TABS = [
-  { key: "identidad", label: "Identidad", path: "/admin/configuracion/identidad" },
-  { key: "colores", label: "Colores y tipografía", path: "/admin/configuracion/colores-tipografia" },
-  { key: "apariencia", label: "Apariencia", path: "/admin/configuracion/apariencia" },
+  { key: "identidad", label: "Identidad", path: "/sistema/identidad/identidad" },
+  { key: "colores", label: "Colores y tipografía", path: "/sistema/identidad/colores-tipografia" },
+  { key: "apariencia", label: "Apariencia", path: "/sistema/identidad/apariencia" },
 ];
 
 const BREADCRUMB_ITEMS = [{ label: "Administración" }, { label: "Configuración" }];

@@ -1775,3 +1775,85 @@
   position: relative;
   z-index: 1;
 }
+
+/* ---------- Administración integrada (módulos del template base) ---------- */
+.mz-nav-section {
+  margin: 14px 12px 6px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mz-side-fg-dim);
+}
+
+/* Las pantallas del template base (usuarios, roles, permisos, identidad)
+   usan Bootstrap: aquí se alinean con los tokens de la matriz para que se
+   vean como parte de la misma interfaz. */
+.mz-view h2 {
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.mz-view h5,
+.mz-view h6 {
+  font-family: var(--mz-font-display);
+  color: var(--mz-ink);
+}
+
+.mz-view .table {
+  --bs-table-bg: var(--mz-raised);
+  --bs-table-striped-bg: var(--mz-sunken);
+  --bs-table-color: var(--mz-ink);
+  --bs-table-striped-color: var(--mz-ink);
+  --bs-table-border-color: var(--mz-border);
+  font-size: 12.8px;
+  border: 1px solid var(--mz-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.mz-view .table thead th {
+  background: var(--mz-sunken);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mz-ink-soft);
+}
+
+.mz-view .card {
+  background: var(--mz-raised);
+  border: 1px solid var(--mz-border);
+  border-radius: 16px;
+  box-shadow: var(--mz-shadow-1);
+  color: var(--mz-ink);
+}
+
+.mz-view .card-header {
+  background: var(--mz-sunken);
+  border-color: var(--mz-border);
+}
+
+.mz-view .list-group-item {
+  background: var(--mz-raised);
+  border-color: var(--mz-border);
+  color: var(--mz-ink);
+}
+
+.mz-view .breadcrumb {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.mz-view .form-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--mz-ink-soft);
+}
+
+.mz-view pre.mz-code {
+  white-space: pre-wrap;
+  background: var(--mz-sunken);
+  border-radius: 6px;
+  padding: 8px;
+  max-height: 260px;
+  overflow: auto;
+}

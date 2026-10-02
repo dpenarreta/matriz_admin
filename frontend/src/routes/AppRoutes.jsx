@@ -1,10 +1,18 @@
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 
-import { AdminLayout } from "../components/admin/AdminLayout/AdminLayout";
-import { AppShell } from "../components/matriz/AppShell";
-import { RequireAuth } from "../components/matriz/RequireAuth";
 import { RequirePermission } from "../components/common/RequirePermission/RequirePermission";
+import { AppShell, homePathFor, RequireCompany } from "../components/matriz/AppShell";
+import { RequireAuth } from "../components/matriz/RequireAuth";
+import { useCompany } from "../context/CompanyContext";
 import { useAuth } from "../hooks/useAuth";
+import { CatalogsPage } from "../pages/Admin/Catalogos/CatalogsPage";
+import { ConfiguracionPage as IdentidadPage } from "../pages/Admin/Configuracion/ConfiguracionPage";
+import { CompaniesPage } from "../pages/Admin/Empresas/CompaniesPage";
+import { PermissionsPage } from "../pages/Admin/Permissions/PermissionsPage";
+import { RoleForm } from "../pages/Admin/Roles/RoleForm";
+import { RolesList } from "../pages/Admin/Roles/RolesList";
+import { UserForm } from "../pages/Admin/Users/UserForm";
+import { UsersList } from "../pages/Admin/Users/UsersList";
 import { Forbidden } from "../pages/Errors/Forbidden";
 import { NotFound } from "../pages/Errors/NotFound";
 import { Login } from "../pages/Login/Login";
@@ -17,21 +25,45 @@ import { ResumenPage } from "../pages/Matriz/ResumenPage";
 import { ChangePasswordRequired } from "../pages/PasswordReset/ChangePasswordRequired";
 import { ForgotPassword } from "../pages/PasswordReset/ForgotPassword";
 import { ResetPassword } from "../pages/PasswordReset/ResetPassword";
-import { CatalogsPage } from "../pages/Admin/Catalogos/CatalogsPage";
-import { ConfiguracionPage } from "../pages/Admin/Configuracion/ConfiguracionPage";
-import { CompaniesPage } from "../pages/Admin/Empresas/CompaniesPage";
-import { PermissionsPage } from "../pages/Admin/Permissions/PermissionsPage";
 import { Register } from "../pages/Register/Register";
-import { RoleForm } from "../pages/Admin/Roles/RoleForm";
-import { RolesList } from "../pages/Admin/Roles/RolesList";
-import { UserForm } from "../pages/Admin/Users/UserForm";
-import { UsersList } from "../pages/Admin/Users/UsersList";
+import { AuditoriaSistemaPage } from "../pages/Sistema/AuditoriaSistemaPage";
 
-const USUARIOS_VER = "usuarios.ver";
-const ROLES_VER = "roles.ver";
-const PERMISOS_VER = "permisos.ver";
-const CONFIGURACION_VER = "configuracion.ver";
 const CHANGE_PASSWORD_REQUIRED_PATH = "/change-password-required";
+
+function guarded(permission, element) {
+  return <RequirePermission permission={permission}>{element}</RequirePermission>;
+}
+
+function matrix(element) {
+  return <RequireCompany>{element}</RequireCompany>;
+}
+
+/** Inicio: la matriz si tiene empresa; si no, el primer módulo de administración al que tiene acceso. */
+function Home() {
+  const { user } = useAuth();
+  const { company, isLoading } = useCompany();
+  if (isLoading) return null;
+  return <Navigate to={homePathFor(user, Boolean(company))} replace />;
+}
+
+// Las rutas del antiguo panel `/admin` (template base) llevan a su lugar
+// dentro de la interfaz única de la matriz.
+const LEGACY_ADMIN = {
+  users: "/sistema/usuarios",
+  roles: "/sistema/roles",
+  permissions: "/sistema/permisos",
+  empresas: "/sistema/empresas",
+  catalogos: "/sistema/catalogos",
+  configuracion: "/sistema/identidad/identidad",
+};
+
+function LegacyAdminRedirect() {
+  const { section, id } = useParams();
+  const base = LEGACY_ADMIN[section] || "/";
+  if (section === "configuracion" && id) return <Navigate to={`/sistema/identidad/${id}`} replace />;
+  if (id) return <Navigate to={`${base}/${id === "new" ? "nuevo" : id}`} replace />;
+  return <Navigate to={base} replace />;
+}
 
 export function AppRoutes() {
   const { user } = useAuth();
@@ -48,7 +80,16 @@ export function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/resumen" replace />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path={CHANGE_PASSWORD_REQUIRED_PATH} element={<ChangePasswordRequired />} />
+
+      <Route path="/admin" element={<Navigate to="/sistema/usuarios" replace />} />
+      <Route path="/admin/:section" element={<LegacyAdminRedirect />} />
+      <Route path="/admin/:section/:id" element={<LegacyAdminRedirect />} />
+
       <Route
         element={
           <RequireAuth>
@@ -56,122 +97,33 @@ export function AppRoutes() {
           </RequireAuth>
         }
       >
-        <Route path="/resumen" element={<ResumenPage />} />
-        <Route path="/matriz" element={<MatrizPage />} />
-        <Route path="/calendario" element={<CalendarioPage />} />
-        <Route path="/documentos" element={<DocumentosPage />} />
-        <Route path="/reportes" element={<ReportesPage />} />
-        <Route path="/configuracion" element={<MatrizConfiguracionPage />} />
-      </Route>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path={CHANGE_PASSWORD_REQUIRED_PATH} element={<ChangePasswordRequired />} />
-      <Route path="/403" element={<Forbidden />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/403" element={<Forbidden />} />
 
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<Navigate to="/admin/users" replace />} />
-        <Route
-          path="users"
-          element={
-            <RequirePermission permission={USUARIOS_VER}>
-              <UsersList />
-            </RequirePermission>
-          }
-        />
-        <Route
-          path="users/new"
-          element={
-            <RequirePermission permission={USUARIOS_VER}>
-              <UserForm />
-            </RequirePermission>
-          }
-        />
-        <Route
-          path="users/:id"
-          element={
-            <RequirePermission permission={USUARIOS_VER}>
-              <UserForm />
-            </RequirePermission>
-          }
-        />
-        <Route
-          path="roles"
-          element={
-            <RequirePermission permission={ROLES_VER}>
-              <RolesList />
-            </RequirePermission>
-          }
-        />
-        <Route
-          path="roles/new"
-          element={
-            <RequirePermission permission={ROLES_VER}>
-              <RoleForm />
-            </RequirePermission>
-          }
-        />
-        <Route
-          path="roles/:id"
-          element={
-            <RequirePermission permission={ROLES_VER}>
-              <RoleForm />
-            </RequirePermission>
-          }
-        />
-        <Route
-          path="permissions"
-          element={
-            <RequirePermission permission={PERMISOS_VER}>
-              <PermissionsPage />
-            </RequirePermission>
-          }
-        />
-        <Route
-          path="empresas"
-          element={
-            <RequirePermission permission="empresas.ver">
-              <CompaniesPage />
-            </RequirePermission>
-          }
-        />
-        <Route
-          path="catalogos"
-          element={
-            <RequirePermission permission="catalogos.ver">
-              <CatalogsPage />
-            </RequirePermission>
-          }
-        />
-        <Route path="configuracion" element={<Navigate to="/admin/configuracion/identidad" replace />} />
-        <Route
-          path="configuracion/identidad"
-          element={
-            <RequirePermission permission={CONFIGURACION_VER}>
-              <ConfiguracionPage />
-            </RequirePermission>
-          }
-        />
-        <Route
-          path="configuracion/colores-tipografia"
-          element={
-            <RequirePermission permission={CONFIGURACION_VER}>
-              <ConfiguracionPage />
-            </RequirePermission>
-          }
-        />
-        <Route
-          path="configuracion/apariencia"
-          element={
-            <RequirePermission permission={CONFIGURACION_VER}>
-              <ConfiguracionPage />
-            </RequirePermission>
-          }
-        />
-      </Route>
+        {/* Matriz de obligaciones */}
+        <Route path="/resumen" element={matrix(<ResumenPage />)} />
+        <Route path="/matriz" element={matrix(<MatrizPage />)} />
+        <Route path="/calendario" element={matrix(<CalendarioPage />)} />
+        <Route path="/documentos" element={matrix(<DocumentosPage />)} />
+        <Route path="/reportes" element={matrix(<ReportesPage />)} />
+        <Route path="/configuracion" element={matrix(<MatrizConfiguracionPage />)} />
 
-      <Route path="*" element={<NotFound />} />
+        {/* Administración (módulos del template base, en la misma interfaz) */}
+        <Route path="/sistema/usuarios" element={guarded("usuarios.ver", <UsersList />)} />
+        <Route path="/sistema/usuarios/nuevo" element={guarded("usuarios.ver", <UserForm />)} />
+        <Route path="/sistema/usuarios/:id" element={guarded("usuarios.ver", <UserForm />)} />
+        <Route path="/sistema/roles" element={guarded("roles.ver", <RolesList />)} />
+        <Route path="/sistema/roles/nuevo" element={guarded("roles.ver", <RoleForm />)} />
+        <Route path="/sistema/roles/:id" element={guarded("roles.ver", <RoleForm />)} />
+        <Route path="/sistema/permisos" element={guarded("permisos.ver", <PermissionsPage />)} />
+        <Route path="/sistema/empresas" element={guarded("empresas.ver", <CompaniesPage />)} />
+        <Route path="/sistema/catalogos" element={guarded("catalogos.ver", <CatalogsPage />)} />
+        <Route path="/sistema/auditoria" element={guarded("auditoria.ver", <AuditoriaSistemaPage />)} />
+        <Route path="/sistema/identidad" element={<Navigate to="/sistema/identidad/identidad" replace />} />
+        <Route path="/sistema/identidad/:tab" element={guarded("configuracion.ver", <IdentidadPage />)} />
+
+        <Route path="*" element={<NotFound />} />
+      </Route>
     </Routes>
   );
 }

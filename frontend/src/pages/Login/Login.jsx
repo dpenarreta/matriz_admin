@@ -18,7 +18,7 @@ export function Login() {
     event.preventDefault();
     try {
       const me = await login(form);
-      navigate(me.must_change_password ? "/change-password-required" : "/resumen");
+      navigate(me.must_change_password ? "/change-password-required" : "/");
     } catch {
       // El mensaje de error ya se expone vía useAuth().error
     }

@@ -1,15 +1,17 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { matrizService } from "../../api/matrizService";
 import { useCompany } from "../../context/CompanyContext";
+import { UnsavedChangesProvider } from "../../context/UnsavedChangesContext";
 import { useAuth } from "../../hooks/useAuth";
 import { initials } from "../../utils/matrizFormat";
 import { Icon } from "../common/Icon/Icon";
 import { ObligationFormModal } from "./ObligationFormModal";
 import { PeriodDrawer } from "./PeriodDrawer";
 
-const NAV = [
+// Módulos de la matriz: necesitan una empresa activa.
+const MATRIX_NAV = [
   { path: "/resumen", label: "Resumen", icon: "grid-1x2" },
   { path: "/matriz", label: "Matriz de obligaciones", icon: "building", badge: true },
   { path: "/calendario", label: "Calendario", icon: "calendar3" },
@@ -18,7 +20,31 @@ const NAV = [
   { path: "/configuracion", label: "Configuración", icon: "gear" },
 ];
 
-const TITLES = Object.fromEntries(NAV.map((item) => [item.path, item.label]));
+// Módulos del template base (usuarios, roles, permisos…), integrados en la
+// misma interfaz. Cada uno se muestra solo con su permiso del catálogo; la
+// autorización real siempre la vuelve a validar el backend.
+const SYSTEM_NAV = [
+  { path: "/sistema/usuarios", label: "Usuarios", icon: "people", permission: "usuarios.ver" },
+  { path: "/sistema/roles", label: "Roles", icon: "shield-lock", permission: "roles.ver" },
+  { path: "/sistema/permisos", label: "Permisos", icon: "key", permission: "permisos.ver" },
+  { path: "/sistema/empresas", label: "Empresas", icon: "buildings", permission: "empresas.ver" },
+  { path: "/sistema/catalogos", label: "Catálogos", icon: "tags", permission: "catalogos.ver" },
+  {
+    path: "/sistema/identidad/identidad",
+    match: "/sistema/identidad",
+    label: "Identidad visual",
+    icon: "palette",
+    permission: "configuracion.ver",
+  },
+  { path: "/sistema/auditoria", label: "Auditoría del sistema", icon: "clock-history", permission: "auditoria.ver" },
+];
+
+const ALL_NAV = [...MATRIX_NAV, ...SYSTEM_NAV];
+
+function titleFor(pathname) {
+  const item = ALL_NAV.find((entry) => pathname.startsWith(entry.match || entry.path));
+  return item ? item.label : "Matriz";
+}
 
 const ShellContext = createContext(null);
 
@@ -27,6 +53,13 @@ export function useShell() {
   const context = useContext(ShellContext);
   if (!context) throw new Error("useShell debe usarse dentro de <AppShell>.");
   return context;
+}
+
+/** Primera pantalla a la que puede entrar el usuario. */
+export function homePathFor(user, hasCompany) {
+  if (hasCompany) return "/resumen";
+  const item = SYSTEM_NAV.find((entry) => user?.permissions?.includes(entry.permission));
+  return item ? item.path : "/resumen";
 }
 
 export function AppShell() {
@@ -87,20 +120,9 @@ export function AppShell() {
     return <div className="mz-loading">Cargando…</div>;
   }
 
-  if (!company) {
-    return (
-      <div className="mz-empty-company">
-        <h2>Sin empresas asignadas</h2>
-        <p>Su usuario no tiene un rol en ninguna empresa. Solicite acceso a un Administrador.</p>
-        <button type="button" className="btn btn-outline-secondary" onClick={logout}>
-          Cerrar sesión
-        </button>
-      </div>
-    );
-  }
-
   const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.username;
-  const hasAdminPanel = Boolean(user?.permissions?.length);
+  const systemItems = SYSTEM_NAV.filter((item) => user?.permissions?.includes(item.permission));
+  const roleLabel = company?.role_label || (user?.is_superuser ? "Superusuario" : "Sin rol en empresas");
 
   function handleSearch(event) {
     const value = event.target.value;
@@ -111,137 +133,172 @@ export function AppShell() {
     }, 250);
   }
 
+  const navItem = (item) => (
+    <li key={item.path}>
+      <NavLink
+        to={item.path}
+        className={() =>
+          `mz-nav-item ${location.pathname.startsWith(item.match || item.path) ? "is-active" : ""}`
+        }
+      >
+        <Icon name={item.icon} />
+        <span>{item.label}</span>
+        {item.badge && attention > 0 && (
+          <span className="mz-badge" title="Incumplidas o que vencen hoy">
+            {attention}
+          </span>
+        )}
+      </NavLink>
+    </li>
+  );
+
   return (
     <ShellContext.Provider value={shell}>
-      <div className="mz-shell" style={{ "--company-color": company.color }}>
-        <nav className={`mz-sidebar ${menuOpen ? "mz-sidebar--open" : ""}`} aria-label="Menú principal">
-          <div className="mz-brand">
-            <span className="mz-glyph">MA</span>
-            <span>
-              Matriz Administrativa
-              <br />
-              de Obligaciones
-            </span>
-          </div>
-          <div className="mz-active-company">
-            <small>Tablero activo</small>
-            <strong>{company.short_name}</strong>
-          </div>
-          <ul className="mz-nav">
-            {NAV.map((item) => (
-              <li key={item.path}>
-                <NavLink to={item.path} className={({ isActive }) => `mz-nav-item ${isActive ? "is-active" : ""}`}>
-                  <Icon name={item.icon} />
-                  <span>{item.label}</span>
-                  {item.badge && attention > 0 && (
-                    <span className="mz-badge" title="Incumplidas o que vencen hoy">
-                      {attention}
-                    </span>
-                  )}
-                </NavLink>
-              </li>
-            ))}
-            {hasAdminPanel && (
-              <li>
-                <Link to="/admin" className="mz-nav-item">
-                  <Icon name="shield-lock" />
-                  <span>Administración del sistema</span>
-                </Link>
-              </li>
-            )}
-          </ul>
-          <div className="mz-sidebar-foot">
-            <span className="mz-role-pill">
-              <Icon name="lock-fill" /> {company.role_label}
-            </span>
-            <div className="mz-user">
-              <div className="mz-avatar">{initials(fullName)}</div>
-              <div>
-                <strong>{fullName}</strong>
-                <span>{user?.email}</span>
+      <UnsavedChangesProvider>
+        <div className="mz-shell" style={company ? { "--company-color": company.color } : undefined}>
+          <nav className={`mz-sidebar ${menuOpen ? "mz-sidebar--open" : ""}`} aria-label="Menú principal">
+            <div className="mz-brand">
+              <span className="mz-glyph">MA</span>
+              <span>
+                Matriz Administrativa
+                <br />
+                de Obligaciones
+              </span>
+            </div>
+            {company && (
+              <div className="mz-active-company">
+                <small>Tablero activo</small>
+                <strong>{company.short_name}</strong>
               </div>
-              <button type="button" className="mz-logout" onClick={logout} title="Cerrar sesión" aria-label="Cerrar sesión">
-                <Icon name="box-arrow-right" />
-              </button>
-            </div>
-          </div>
-        </nav>
-        {menuOpen && <div className="mz-sidebar-backdrop" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
-
-        <div className="mz-main">
-          <header className="mz-topbar">
-            <button type="button" className="mz-icon-btn mz-menu-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menú">
-              <Icon name="list" />
-            </button>
-            <h1>{TITLES[location.pathname] || "Matriz"}</h1>
-            <div className="mz-spacer" />
-            <label className="mz-search">
-              <Icon name="search" />
-              <span className="visually-hidden">Buscar</span>
-              <input
-                type="search"
-                value={search}
-                onChange={handleSearch}
-                placeholder="Buscar obligación, responsable, código…"
-              />
-            </label>
-            <button
-              type="button"
-              className="mz-icon-btn"
-              title="Recordatorios y notificaciones"
-              aria-label="Recordatorios y notificaciones"
-              onClick={() => navigate("/configuracion?tab=recordatorios")}
-            >
-              <Icon name="bell" />
-              {attention > 0 && <span className="mz-dot" />}
-            </button>
-            <div className="mz-switcher" ref={switcherRef}>
-              <button type="button" onClick={() => setSwitcherOpen((open) => !open)} aria-expanded={switcherOpen}>
-                <span className="mz-color-dot" style={{ background: company.color }} />
-                {company.short_name}
-                <Icon name="chevron-down" />
-              </button>
-              {switcherOpen && (
-                <div className="mz-dropdown" role="menu">
-                  {companies.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      role="menuitem"
-                      className="mz-dropdown-item"
-                      onClick={() => {
-                        setActiveId(item.id);
-                        setSwitcherOpen(false);
-                        closePeriod();
-                      }}
-                    >
-                      <span className="mz-color-dot" style={{ background: item.color }} />
-                      <span>
-                        {item.short_name}
-                        <small>{item.role_label}</small>
-                      </span>
-                      {item.id === company.id && <Icon name="check2" className="ms-auto" />}
-                    </button>
-                  ))}
-                </div>
+            )}
+            <ul className="mz-nav">
+              {company && MATRIX_NAV.map(navItem)}
+              {systemItems.length > 0 && (
+                <>
+                  <li className="mz-nav-section" aria-hidden="true">
+                    Administración
+                  </li>
+                  {systemItems.map(navItem)}
+                </>
               )}
+            </ul>
+            <div className="mz-sidebar-foot">
+              <span className="mz-role-pill">
+                <Icon name="lock-fill" /> {roleLabel}
+              </span>
+              <div className="mz-user">
+                <div className="mz-avatar">{initials(fullName)}</div>
+                <div>
+                  <strong>{fullName}</strong>
+                  <span>{user?.email}</span>
+                </div>
+                <button type="button" className="mz-logout" onClick={logout} title="Cerrar sesión" aria-label="Cerrar sesión">
+                  <Icon name="box-arrow-right" />
+                </button>
+              </div>
             </div>
-          </header>
-          <main className="mz-view">
-            <Outlet />
-          </main>
+          </nav>
+          {menuOpen && <div className="mz-sidebar-backdrop" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
+
+          <div className="mz-main">
+            <header className="mz-topbar">
+              <button type="button" className="mz-icon-btn mz-menu-btn" onClick={() => setMenuOpen(true)} aria-label="Abrir menú">
+                <Icon name="list" />
+              </button>
+              <h1>{titleFor(location.pathname)}</h1>
+              <div className="mz-spacer" />
+              {company && (
+                <>
+                  <label className="mz-search">
+                    <Icon name="search" />
+                    <span className="visually-hidden">Buscar</span>
+                    <input
+                      type="search"
+                      value={search}
+                      onChange={handleSearch}
+                      placeholder="Buscar obligación, responsable, código…"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="mz-icon-btn"
+                    title="Recordatorios y notificaciones"
+                    aria-label="Recordatorios y notificaciones"
+                    onClick={() => navigate("/configuracion?tab=recordatorios")}
+                  >
+                    <Icon name="bell" />
+                    {attention > 0 && <span className="mz-dot" />}
+                  </button>
+                  <div className="mz-switcher" ref={switcherRef}>
+                    <button type="button" onClick={() => setSwitcherOpen((open) => !open)} aria-expanded={switcherOpen}>
+                      <span className="mz-color-dot" style={{ background: company.color }} />
+                      {company.short_name}
+                      <Icon name="chevron-down" />
+                    </button>
+                    {switcherOpen && (
+                      <div className="mz-dropdown" role="menu">
+                        {companies.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            role="menuitem"
+                            className="mz-dropdown-item"
+                            onClick={() => {
+                              setActiveId(item.id);
+                              setSwitcherOpen(false);
+                              closePeriod();
+                            }}
+                          >
+                            <span className="mz-color-dot" style={{ background: item.color }} />
+                            <span>
+                              {item.short_name}
+                              <small>{item.role_label}</small>
+                            </span>
+                            {item.id === company.id && <Icon name="check2" className="ms-auto" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </header>
+            <main className="mz-view">
+              <Outlet />
+            </main>
+          </div>
         </div>
-      </div>
-      {openPeriodId && <PeriodDrawer periodId={openPeriodId} onClose={closePeriod} />}
-      {creating && (
-        <ObligationFormModal
-          onClose={() => setCreating(false)}
-          onCreated={(period) => {
-            setCreating(false);
-            navigate(`/matriz?periodo=${period.id}`);
-          }}
-        />
-      )}
+        {company && openPeriodId && <PeriodDrawer periodId={openPeriodId} onClose={closePeriod} />}
+        {company && creating && (
+          <ObligationFormModal
+            onClose={() => setCreating(false)}
+            onCreated={(period) => {
+              setCreating(false);
+              navigate(`/matriz?periodo=${period.id}`);
+            }}
+          />
+        )}
+      </UnsavedChangesProvider>
     </ShellContext.Provider>
+  );
+}
+
+/** Las pantallas de la matriz necesitan una empresa activa. */
+export function RequireCompany({ children }) {
+  const { company } = useCompany();
+  const { user } = useAuth();
+  if (company) return children;
+  return (
+    <div className="mz-empty-company">
+      <h2>Sin empresas asignadas</h2>
+      <p>
+        Su usuario no tiene un rol en ninguna empresa. Un administrador puede asignárselo en Administración → Usuarios.
+      </p>
+      {homePathFor(user, false) !== "/resumen" && (
+        <NavLink to={homePathFor(user, false)} className="btn btn-outline-secondary btn-sm">
+          Ir a Administración
+        </NavLink>
+      )}
+    </div>
   );
 }

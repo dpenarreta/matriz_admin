@@ -430,7 +430,7 @@ function MembersTab() {
         ))}
         <PermissionMatrix roles={roles} />
         {canEditRoles && (
-          <Link to="/admin/roles" className="btn btn-outline-secondary btn-sm mt-2">
+          <Link to="/sistema/roles" className="btn btn-outline-secondary btn-sm mt-2">
             <Icon name="shield-lock" /> Configurar roles y permisos
           </Link>
         )}
