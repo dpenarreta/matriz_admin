@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -15,7 +15,7 @@ function renderAt(path) {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/configuracion" element={<ConfiguracionLayout />}>
-          <Route path="empresa" element={<p>ventana empresa</p>} />
+          <Route path="empresas" element={<p>ventana empresas</p>} />
           <Route path="usuarios" element={<p>ventana usuarios</p>} />
         </Route>
         <Route path="/403" element={<p>prohibido</p>} />
@@ -24,25 +24,56 @@ function renderAt(path) {
   );
 }
 
+function tabLabels() {
+  const nav = screen.getByRole("navigation", { name: "Secciones de configuración" });
+  return within(nav)
+    .getAllByRole("link")
+    .map((link) => link.textContent);
+}
+
+const ALL_SYSTEM = [
+  "empresas.ver",
+  "usuarios.ver",
+  "roles.ver",
+  "permisos.ver",
+  "catalogos.ver",
+  "configuracion.ver",
+  "auditoria.ver",
+];
+
 describe("ConfiguracionLayout", () => {
   beforeEach(() => {
     authState = { user: { permissions: [] } };
     companyState = {
       company: { id: 1, short_name: "Laarcourier" },
-      can: (capability) => ["configurar", "gestionar_miembros"].includes(capability),
+      can: () => true,
     };
   });
 
-  it("muestra las pestañas de la empresa y del sistema según permisos", () => {
-    authState.user.permissions = ["usuarios.ver", "roles.ver", "configuracion.ver"];
-    renderAt("/configuracion/empresa");
-    const tabs = screen.getByRole("navigation", { name: "Secciones de configuración" });
-    for (const label of ["Empresa", "Recordatorios", "Usuarios y roles de la empresa", "Usuarios", "Roles", "Identidad visual"]) {
-      expect(tabs).toHaveTextContent(label);
-    }
-    expect(tabs).not.toHaveTextContent("Auditoría de la empresa");
-    expect(tabs).not.toHaveTextContent("Empresas");
-    expect(screen.getByText("ventana empresa")).toBeInTheDocument();
+  it("con todos los permisos muestra una sola pestaña por tema, sin repetidos", () => {
+    authState.user.permissions = ALL_SYSTEM;
+    renderAt("/configuracion/empresas");
+    expect(tabLabels()).toEqual([
+      "Empresas",
+      "Recordatorios",
+      "Usuarios",
+      "Roles",
+      "Permisos",
+      "Catálogos",
+      "Identidad visual",
+      "Auditoría",
+    ]);
+  });
+
+  it("el administrador de una empresa (sin permisos del sistema) ve las mismas pestañas unificadas", () => {
+    renderAt("/configuracion/empresas");
+    expect(tabLabels()).toEqual(["Empresas", "Recordatorios", "Usuarios", "Auditoría"]);
+  });
+
+  it("un responsable solo ve Recordatorios", () => {
+    companyState.can = () => false;
+    renderAt("/configuracion/usuarios");
+    expect(tabLabels()).toEqual(["Recordatorios"]);
   });
 
   it("cada pestaña es una ventana con su propia ruta", () => {

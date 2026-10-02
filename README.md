@@ -45,7 +45,7 @@ nuevos van solo aquí.
 | Calendario | Vencimientos del mes coloreados por estado |
 | Documentos | Expedientes con evidencia y pendientes de evidencia |
 | Reportes | Cumplimiento a tiempo y tardío, por área y por entidad, con rango de fechas y exportación |
-| Configuración | Una pestaña por ventana, según permisos. De la empresa activa: empresa, recordatorios y escalamiento, usuarios y roles de la empresa, auditoría de la empresa. Del sistema (módulos del template base): usuarios (con roles del sistema, permisos directos y roles por empresa), roles, permisos, empresas y sucursales, catálogos, identidad visual y auditoría del sistema |
+| Configuración | 8 pestañas, cada una una ventana independiente y visible según permisos: Empresas, Recordatorios, Usuarios, Roles, Permisos, Catálogos, Identidad visual y Auditoría. Empresas, Usuarios y Auditoría muestran todo el sistema a quien tiene el permiso del catálogo, y solo la empresa activa a quien administra esa empresa |
 
 Un **programador** (`python manage.py run_scheduler`) genera los períodos
 siguientes, envía recordatorios (15, 7, 3 y 1 día antes y el día del

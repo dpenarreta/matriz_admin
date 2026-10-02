@@ -2,10 +2,19 @@
 
 La matriz usa el mismo sistema de roles y permisos del template base
 (`docs/roles-and-permissions.md`). No hay listas fijas en el código: todo
-se configura en la pantalla **Configuración** de la matriz, que tiene una pestaña (ventana
-independiente) por cada módulo del template base: usuarios, roles, permisos,
-empresas, catálogos, identidad visual y auditoría del sistema.
-Cada pestaña aparece solo para quien tiene su permiso.
+se configura en la pantalla **Configuración** de la matriz, con una pestaña
+(ventana independiente) por tema, sin repetidos:
+
+| Pestaña | Se muestra con | Contenido |
+| --- | --- | --- |
+| Empresas | `empresas.ver`, o `matriz.configurar` en la empresa activa | Todas las empresas y sucursales; sin `empresas.ver`, solo la empresa activa |
+| Recordatorios | Rol en la empresa activa | Anticipaciones, hora y escalamiento de la empresa |
+| Usuarios | `usuarios.ver`, o `matriz.gestionar_miembros` en la empresa activa | Todos los usuarios, con sus roles del sistema, permisos directos y roles por empresa; sin `usuarios.ver`, solo las personas de la empresa activa |
+| Roles | `roles.ver` | Roles editables y sus permisos |
+| Permisos | `permisos.ver` | Catálogo de permisos |
+| Catálogos | `catalogos.ver` | Áreas y entidades de control |
+| Identidad visual | `configuracion.ver` | Nombre, logo, colores, tipografía y apariencia |
+| Auditoría | `auditoria.ver`, o `matriz.ver_auditoria` en la empresa activa | Historial de obligaciones de la empresa y bitácora del sistema, en la misma ventana |
 
 ## Tres niveles de acceso
 

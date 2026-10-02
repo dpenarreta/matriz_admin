@@ -8,7 +8,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { initials } from "../../utils/matrizFormat";
 import { Icon } from "../common/Icon/Icon";
 import { ObligationFormModal } from "./ObligationFormModal";
-import { SYSTEM_TABS } from "../../pages/Matriz/ConfiguracionLayout";
+import { SYSTEM_PERMISSIONS } from "../../pages/Matriz/ConfiguracionWindows";
 import { PeriodDrawer } from "./PeriodDrawer";
 
 // Menú lateral. Los módulos del template base (usuarios, roles, permisos,
@@ -41,7 +41,7 @@ export function useShell() {
  * Configuración si solo tiene permisos de los módulos del sistema. */
 export function homePathFor(user, hasCompany) {
   if (hasCompany) return "/resumen";
-  return SYSTEM_TABS.some((tab) => user?.permissions?.includes(tab.permission)) ? "/configuracion" : "/resumen";
+  return SYSTEM_PERMISSIONS.some((permission) => user?.permissions?.includes(permission)) ? "/configuracion" : "/resumen";
 }
 
 export function AppShell() {
@@ -103,7 +103,7 @@ export function AppShell() {
   }
 
   const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.username;
-  const hasSystemTabs = SYSTEM_TABS.some((tab) => user?.permissions?.includes(tab.permission));
+  const hasSystemTabs = SYSTEM_PERMISSIONS.some((permission) => user?.permissions?.includes(permission));
   // Sin empresa, la única entrada del menú es Configuración (módulos del sistema).
   const navItems = company
     ? MATRIX_NAV

@@ -7,23 +7,17 @@ import { useCompany } from "../context/CompanyContext";
 import { useAuth } from "../hooks/useAuth";
 import { CatalogsPage } from "../pages/Admin/Catalogos/CatalogsPage";
 import { ConfiguracionPage as IdentidadPage } from "../pages/Admin/Configuracion/ConfiguracionPage";
-import { CompaniesPage } from "../pages/Admin/Empresas/CompaniesPage";
 import { PermissionsPage } from "../pages/Admin/Permissions/PermissionsPage";
 import { RoleForm } from "../pages/Admin/Roles/RoleForm";
 import { RolesList } from "../pages/Admin/Roles/RolesList";
 import { UserForm } from "../pages/Admin/Users/UserForm";
-import { UsersList } from "../pages/Admin/Users/UsersList";
 import { Forbidden } from "../pages/Errors/Forbidden";
 import { NotFound } from "../pages/Errors/NotFound";
 import { Login } from "../pages/Login/Login";
 import { CalendarioPage } from "../pages/Matriz/CalendarioPage";
-import {
-  AuditTab,
-  CompanyTab,
-  MembersTab,
-  RemindersConfigTab,
-} from "../pages/Matriz/ConfiguracionEmpresaTabs";
+import { RemindersConfigTab } from "../pages/Matriz/ConfiguracionEmpresaTabs";
 import { ConfiguracionLayout } from "../pages/Matriz/ConfiguracionLayout";
+import { AuditoriaWindow, EmpresasWindow, UsuariosWindow } from "../pages/Matriz/ConfiguracionWindows";
 import { DocumentosPage } from "../pages/Matriz/DocumentosPage";
 import { MatrizPage } from "../pages/Matriz/MatrizPage";
 import { ReportesPage } from "../pages/Matriz/ReportesPage";
@@ -32,7 +26,6 @@ import { ChangePasswordRequired } from "../pages/PasswordReset/ChangePasswordReq
 import { ForgotPassword } from "../pages/PasswordReset/ForgotPassword";
 import { ResetPassword } from "../pages/PasswordReset/ResetPassword";
 import { Register } from "../pages/Register/Register";
-import { AuditoriaSistemaPage } from "../pages/Sistema/AuditoriaSistemaPage";
 
 const CHANGE_PASSWORD_REQUIRED_PATH = "/change-password-required";
 
@@ -64,7 +57,7 @@ const LEGACY_SECTIONS = {
   catalogos: "catalogos",
   configuracion: "identidad/identidad",
   identidad: "identidad/identidad",
-  auditoria: "auditoria-sistema",
+  auditoria: "auditoria",
 };
 
 function LegacyRedirect() {
@@ -124,22 +117,23 @@ export function AppRoutes() {
 
         {/* Configuración: cada pestaña es una ventana independiente con su ruta */}
         <Route path="/configuracion" element={<ConfiguracionLayout />}>
-          <Route path="empresa" element={matrix(<CompanyTab />)} />
+          <Route path="empresas" element={<EmpresasWindow />} />
           <Route path="recordatorios" element={matrix(<RemindersConfigTab />)} />
-          <Route path="miembros" element={matrix(<MembersTab />)} />
-          <Route path="auditoria" element={matrix(<AuditTab />)} />
-          <Route path="usuarios" element={guarded("usuarios.ver", <UsersList />)} />
+          <Route path="usuarios" element={<UsuariosWindow />} />
           <Route path="usuarios/nuevo" element={guarded("usuarios.ver", <UserForm />)} />
           <Route path="usuarios/:id" element={guarded("usuarios.ver", <UserForm />)} />
           <Route path="roles" element={guarded("roles.ver", <RolesList />)} />
           <Route path="roles/nuevo" element={guarded("roles.ver", <RoleForm />)} />
           <Route path="roles/:id" element={guarded("roles.ver", <RoleForm />)} />
           <Route path="permisos" element={guarded("permisos.ver", <PermissionsPage />)} />
-          <Route path="empresas" element={guarded("empresas.ver", <CompaniesPage />)} />
           <Route path="catalogos" element={guarded("catalogos.ver", <CatalogsPage />)} />
           <Route path="identidad" element={<Navigate to="/configuracion/identidad/identidad" replace />} />
           <Route path="identidad/:tab" element={guarded("configuracion.ver", <IdentidadPage />)} />
-          <Route path="auditoria-sistema" element={guarded("auditoria.ver", <AuditoriaSistemaPage />)} />
+          <Route path="auditoria" element={<AuditoriaWindow />} />
+          {/* Pestañas anteriores, ya unificadas */}
+          <Route path="empresa" element={<Navigate to="/configuracion/empresas" replace />} />
+          <Route path="miembros" element={<Navigate to="/configuracion/usuarios" replace />} />
+          <Route path="auditoria-sistema" element={<Navigate to="/configuracion/auditoria" replace />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

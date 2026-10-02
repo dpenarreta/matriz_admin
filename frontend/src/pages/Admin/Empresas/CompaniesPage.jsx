@@ -54,7 +54,7 @@ export function CompaniesPage() {
 
   function startEdit(company) {
     setEditing(company ? company.id : "new");
-    setForm(company ? { ...EMPTY, ...company, branch: "" } : EMPTY);
+    setForm(company ? { ...EMPTY, ...company, general_manager_id: company.general_manager?.id ?? "", branch: "" } : EMPTY);
     setMessage(null);
     setError(null);
   }
@@ -75,6 +75,7 @@ export function CompaniesPage() {
       color: form.color,
       compliance_date_basis: form.compliance_date_basis,
       is_active: form.is_active,
+      ...(editing !== "new" && { general_manager_id: form.general_manager_id ? Number(form.general_manager_id) : null }),
     };
     try {
       if (editing === "new") {
@@ -86,7 +87,7 @@ export function CompaniesPage() {
         setForm({ ...EMPTY, ...created, branch: "" });
       } else {
         const updated = await adminMatrizService.updateCompany(editing, payload);
-        setForm({ ...EMPTY, ...updated, branch: "" });
+        setForm({ ...EMPTY, ...updated, general_manager_id: updated.general_manager?.id ?? "", branch: "" });
       }
       setMessage("Empresa guardada.");
       load();
@@ -221,6 +222,19 @@ export function CompaniesPage() {
                     <label className="form-check-label" htmlFor="co-active">Empresa activa</label>
                   </div>
                 </div>
+                {editing !== "new" && (
+                  <div className="col-md-6">
+                    <label className="form-label" htmlFor="co-gm">Gerente general (aprobador por defecto)</label>
+                    <select id="co-gm" className="form-select" value={form.general_manager_id} onChange={set("general_manager_id")}>
+                      <option value="">Sin asignar</option>
+                      {(form.people || []).map((person) => (
+                        <option key={person.id} value={person.id}>
+                          {person.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 {editing === "new" && (
                   <div className="col-md-6">
                     <label className="form-label" htmlFor="co-branch">Sucursal principal</label>

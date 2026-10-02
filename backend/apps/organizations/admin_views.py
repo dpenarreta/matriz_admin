@@ -57,6 +57,7 @@ class AdminCompanySerializer(serializers.ModelSerializer):
     general_manager = PersonSerializer(read_only=True)
     branches = serializers.SerializerMethodField()
     member_count = serializers.SerializerMethodField()
+    people = serializers.SerializerMethodField()
 
     class Meta:
         model = Company
@@ -74,6 +75,7 @@ class AdminCompanySerializer(serializers.ModelSerializer):
             "is_active",
             "branches",
             "member_count",
+            "people",
         ]
         read_only_fields = fields
 
@@ -82,6 +84,13 @@ class AdminCompanySerializer(serializers.ModelSerializer):
 
     def get_member_count(self, obj) -> int:
         return obj.memberships.filter(is_active=True).count()
+
+    def get_people(self, obj) -> list[dict]:
+        """Personas con rol activo: candidatas a gerente general."""
+        users = User.objects.filter(
+            is_active=True, memberships__company=obj, memberships__is_active=True
+        ).distinct()
+        return PersonSerializer(users.order_by("first_name", "last_name"), many=True).data
 
 
 class AdminCompanyWriteSerializer(serializers.Serializer):
