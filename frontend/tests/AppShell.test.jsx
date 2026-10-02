@@ -23,7 +23,7 @@ function renderShell(path = "/resumen") {
   );
 }
 
-describe("AppShell (interfaz única)", () => {
+describe("AppShell (menú lateral)", () => {
   beforeEach(() => {
     authState = {
       user: { first_name: "Rodrigo", last_name: "Salcedo", email: "r@x.ec", permissions: [] },
@@ -32,30 +32,25 @@ describe("AppShell (interfaz única)", () => {
     companyState = { companies: [COMPANY], company: COMPANY, setActiveId: vi.fn(), dataVersion: 0, isLoading: false };
   });
 
-  it("muestra la matriz y oculta la administración sin permisos del sistema", () => {
+  it("muestra solo los módulos de la matriz, sin subitems de administración", () => {
+    authState.user.permissions = ["usuarios.ver", "roles.ver", "auditoria.ver", "empresas.ver"];
     renderShell();
-    expect(screen.getByText("Matriz de obligaciones")).toBeInTheDocument();
-    expect(screen.queryByText("Administración")).not.toBeInTheDocument();
-    expect(screen.queryByText("Usuarios")).not.toBeInTheDocument();
+    const nav = screen.getByRole("navigation", { name: "Menú principal" });
+    for (const label of ["Resumen", "Matriz de obligaciones", "Calendario", "Documentos", "Reportes", "Configuración"]) {
+      expect(nav).toHaveTextContent(label);
+    }
+    expect(nav).not.toHaveTextContent("Usuarios");
+    expect(nav).not.toHaveTextContent("Roles");
+    expect(nav).not.toHaveTextContent("Empresas");
   });
 
-  it("agrega solo los módulos de administración que el usuario puede ver", () => {
-    authState.user.permissions = ["usuarios.ver", "roles.ver", "auditoria.ver"];
-    renderShell();
-    expect(screen.getByText("Administración")).toBeInTheDocument();
-    expect(screen.getByText("Usuarios")).toBeInTheDocument();
-    expect(screen.getByText("Roles")).toBeInTheDocument();
-    expect(screen.getByText("Auditoría del sistema")).toBeInTheDocument();
-    expect(screen.queryByText("Empresas")).not.toBeInTheDocument();
-    expect(screen.queryByText("Identidad visual")).not.toBeInTheDocument();
-  });
-
-  it("sin empresa asignada muestra solo la administración, en la misma interfaz", () => {
+  it("sin empresa, con permisos del sistema, el menú ofrece solo Configuración", () => {
     authState.user.permissions = ["usuarios.ver"];
     companyState = { ...companyState, companies: [], company: null };
-    renderShell("/sistema/usuarios");
-    expect(screen.queryByText("Resumen")).not.toBeInTheDocument();
-    expect(screen.getAllByText("Usuarios").length).toBeGreaterThan(0);
+    renderShell("/configuracion/usuarios");
+    const nav = screen.getByRole("navigation", { name: "Menú principal" });
+    expect(nav).toHaveTextContent("Configuración");
+    expect(nav).not.toHaveTextContent("Resumen");
     expect(screen.getByText("Sin rol en empresas")).toBeInTheDocument();
   });
 });

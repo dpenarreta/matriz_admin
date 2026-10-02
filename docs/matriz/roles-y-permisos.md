@@ -2,18 +2,18 @@
 
 La matriz usa el mismo sistema de roles y permisos del template base
 (`docs/roles-and-permissions.md`). No hay listas fijas en el código: todo
-se configura en la sección **Administración** del menú lateral de la matriz,
-que reúne los módulos del template base (usuarios, roles, permisos,
-empresas, catálogos, identidad visual y auditoría) en la misma interfaz.
-Cada opción aparece solo para quien tiene su permiso.
+se configura en la pantalla **Configuración** de la matriz, que tiene una pestaña (ventana
+independiente) por cada módulo del template base: usuarios, roles, permisos,
+empresas, catálogos, identidad visual y auditoría del sistema.
+Cada pestaña aparece solo para quien tiene su permiso.
 
 ## Tres niveles de acceso
 
 | Nivel | Dónde se asigna | Qué controla |
 | --- | --- | --- |
-| Roles del sistema (`user.groups`) | Administración → Usuarios → usuario → "Roles del sistema" | Los módulos de Administración: usuarios, roles, permisos, empresas, catálogos, identidad visual, auditoría técnica |
-| Permisos directos (`user.user_permissions`) | Administración → Usuarios → usuario → "Permisos directos" | Lo mismo que el nivel anterior, sin pasar por un rol |
-| Roles por empresa (membresía) | Administración → Usuarios → usuario → "Roles por empresa", o Matriz → Configuración → Usuarios y roles | Qué puede hacer en la matriz **de esa empresa**: los permisos `matriz.*` del rol |
+| Roles del sistema (`user.groups`) | Configuración → Usuarios → usuario → "Roles del sistema" | Las pestañas del sistema en Configuración: usuarios, roles, permisos, empresas, catálogos, identidad visual, auditoría técnica |
+| Permisos directos (`user.user_permissions`) | Configuración → Usuarios → usuario → "Permisos directos" | Lo mismo que el nivel anterior, sin pasar por un rol |
+| Roles por empresa (membresía) | Configuración → Usuarios → usuario → "Roles por empresa", o Matriz → Configuración → Usuarios y roles | Qué puede hacer en la matriz **de esa empresa**: los permisos `matriz.*` del rol |
 
 Un mismo rol puede usarse en los dos sentidos. Por ejemplo, "Administrador"
 asignado como rol por empresa da los permisos `matriz.*` solo en esa empresa.
@@ -37,8 +37,8 @@ de Django es la excepción y tiene todo en todas las empresas.
 | | `matriz.ver_auditoria` | Ver la auditoría y las notificaciones de la empresa |
 | | `matriz.configurar` | Configurar la empresa y sus recordatorios |
 | | `matriz.gestionar_miembros` | Asignar y quitar roles en la empresa |
-| `empresas` | `empresas.ver`, `empresas.editar` | Administración → Empresas y sus sucursales |
-| `catalogos` | `catalogos.ver`, `catalogos.editar` | Administración → Catálogos (áreas y entidades de control) |
+| `empresas` | `empresas.ver`, `empresas.editar` | Configuración → Empresas y sus sucursales |
+| `catalogos` | `catalogos.ver`, `catalogos.editar` | Configuración → Catálogos (áreas y entidades de control) |
 
 Los módulos del template base (`usuarios`, `roles`, `permisos`,
 `configuracion`, `auditoria`) se mantienen igual.

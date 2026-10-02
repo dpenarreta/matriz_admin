@@ -1776,15 +1776,48 @@
   z-index: 1;
 }
 
-/* ---------- Administración integrada (módulos del template base) ---------- */
-.mz-nav-section {
-  margin: 14px 12px 6px;
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--mz-side-fg-dim);
+/* ---------- Configuración: pestañas (ventanas independientes) ---------- */
+.mz-config-tabs {
+  row-gap: 2px;
 }
 
+.mz-config-tabs a {
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--mz-ink-faint);
+  border-bottom: 2px solid transparent;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.mz-config-tabs a:hover {
+  color: var(--mz-ink);
+}
+
+.mz-config-tabs a.is-active {
+  color: var(--mz-blue-600);
+  border-color: var(--mz-blue-600);
+}
+
+.mz-tabs-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 8px 6px;
+  background: var(--mz-border-strong);
+}
+
+/* Las ventanas del template base traen su propio título y migas de pan:
+   dentro de Configuración, la pestaña ya dice dónde se está. */
+.mz-config-body .breadcrumb {
+  display: none;
+}
+
+.mz-config-body h2 {
+  font-size: 18px;
+}
+
+/* ---------- Ventanas del template base dentro de la matriz ---------- */
 /* Las pantallas del template base (usuarios, roles, permisos, identidad)
    usan Bootstrap: aquí se alinean con los tokens de la matriz para que se
    vean como parte de la misma interfaz. */

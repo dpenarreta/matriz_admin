@@ -17,7 +17,13 @@ import { Forbidden } from "../pages/Errors/Forbidden";
 import { NotFound } from "../pages/Errors/NotFound";
 import { Login } from "../pages/Login/Login";
 import { CalendarioPage } from "../pages/Matriz/CalendarioPage";
-import { ConfiguracionPage as MatrizConfiguracionPage } from "../pages/Matriz/ConfiguracionPage";
+import {
+  AuditTab,
+  CompanyTab,
+  MembersTab,
+  RemindersConfigTab,
+} from "../pages/Matriz/ConfiguracionEmpresaTabs";
+import { ConfiguracionLayout } from "../pages/Matriz/ConfiguracionLayout";
 import { DocumentosPage } from "../pages/Matriz/DocumentosPage";
 import { MatrizPage } from "../pages/Matriz/MatrizPage";
 import { ReportesPage } from "../pages/Matriz/ReportesPage";
@@ -38,7 +44,7 @@ function matrix(element) {
   return <RequireCompany>{element}</RequireCompany>;
 }
 
-/** Inicio: la matriz si tiene empresa; si no, el primer módulo de administración al que tiene acceso. */
+/** Inicio: la matriz si tiene empresa; si no, Configuración (módulos del sistema). */
 function Home() {
   const { user } = useAuth();
   const { company, isLoading } = useCompany();
@@ -46,23 +52,30 @@ function Home() {
   return <Navigate to={homePathFor(user, Boolean(company))} replace />;
 }
 
-// Las rutas del antiguo panel `/admin` (template base) llevan a su lugar
-// dentro de la interfaz única de la matriz.
-const LEGACY_ADMIN = {
-  users: "/sistema/usuarios",
-  roles: "/sistema/roles",
-  permissions: "/sistema/permisos",
-  empresas: "/sistema/empresas",
-  catalogos: "/sistema/catalogos",
-  configuracion: "/sistema/identidad/identidad",
+// Las rutas anteriores (`/admin/...` del template base y `/sistema/...`)
+// llevan a su pestaña dentro de Configuración.
+const LEGACY_SECTIONS = {
+  users: "usuarios",
+  usuarios: "usuarios",
+  roles: "roles",
+  permissions: "permisos",
+  permisos: "permisos",
+  empresas: "empresas",
+  catalogos: "catalogos",
+  configuracion: "identidad/identidad",
+  identidad: "identidad/identidad",
+  auditoria: "auditoria-sistema",
 };
 
-function LegacyAdminRedirect() {
+function LegacyRedirect() {
   const { section, id } = useParams();
-  const base = LEGACY_ADMIN[section] || "/";
-  if (section === "configuracion" && id) return <Navigate to={`/sistema/identidad/${id}`} replace />;
-  if (id) return <Navigate to={`${base}/${id === "new" ? "nuevo" : id}`} replace />;
-  return <Navigate to={base} replace />;
+  const target = LEGACY_SECTIONS[section];
+  if (!target) return <Navigate to="/configuracion" replace />;
+  if (id && (section === "configuracion" || section === "identidad")) {
+    return <Navigate to={`/configuracion/identidad/${id}`} replace />;
+  }
+  if (id) return <Navigate to={`/configuracion/${target}/${id === "new" ? "nuevo" : id}`} replace />;
+  return <Navigate to={`/configuracion/${target}`} replace />;
 }
 
 export function AppRoutes() {
@@ -86,9 +99,11 @@ export function AppRoutes() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path={CHANGE_PASSWORD_REQUIRED_PATH} element={<ChangePasswordRequired />} />
 
-      <Route path="/admin" element={<Navigate to="/sistema/usuarios" replace />} />
-      <Route path="/admin/:section" element={<LegacyAdminRedirect />} />
-      <Route path="/admin/:section/:id" element={<LegacyAdminRedirect />} />
+      <Route path="/admin" element={<Navigate to="/configuracion" replace />} />
+      <Route path="/admin/:section" element={<LegacyRedirect />} />
+      <Route path="/admin/:section/:id" element={<LegacyRedirect />} />
+      <Route path="/sistema/:section" element={<LegacyRedirect />} />
+      <Route path="/sistema/:section/:id" element={<LegacyRedirect />} />
 
       <Route
         element={
@@ -106,21 +121,26 @@ export function AppRoutes() {
         <Route path="/calendario" element={matrix(<CalendarioPage />)} />
         <Route path="/documentos" element={matrix(<DocumentosPage />)} />
         <Route path="/reportes" element={matrix(<ReportesPage />)} />
-        <Route path="/configuracion" element={matrix(<MatrizConfiguracionPage />)} />
 
-        {/* Administración (módulos del template base, en la misma interfaz) */}
-        <Route path="/sistema/usuarios" element={guarded("usuarios.ver", <UsersList />)} />
-        <Route path="/sistema/usuarios/nuevo" element={guarded("usuarios.ver", <UserForm />)} />
-        <Route path="/sistema/usuarios/:id" element={guarded("usuarios.ver", <UserForm />)} />
-        <Route path="/sistema/roles" element={guarded("roles.ver", <RolesList />)} />
-        <Route path="/sistema/roles/nuevo" element={guarded("roles.ver", <RoleForm />)} />
-        <Route path="/sistema/roles/:id" element={guarded("roles.ver", <RoleForm />)} />
-        <Route path="/sistema/permisos" element={guarded("permisos.ver", <PermissionsPage />)} />
-        <Route path="/sistema/empresas" element={guarded("empresas.ver", <CompaniesPage />)} />
-        <Route path="/sistema/catalogos" element={guarded("catalogos.ver", <CatalogsPage />)} />
-        <Route path="/sistema/auditoria" element={guarded("auditoria.ver", <AuditoriaSistemaPage />)} />
-        <Route path="/sistema/identidad" element={<Navigate to="/sistema/identidad/identidad" replace />} />
-        <Route path="/sistema/identidad/:tab" element={guarded("configuracion.ver", <IdentidadPage />)} />
+        {/* Configuración: cada pestaña es una ventana independiente con su ruta */}
+        <Route path="/configuracion" element={<ConfiguracionLayout />}>
+          <Route path="empresa" element={matrix(<CompanyTab />)} />
+          <Route path="recordatorios" element={matrix(<RemindersConfigTab />)} />
+          <Route path="miembros" element={matrix(<MembersTab />)} />
+          <Route path="auditoria" element={matrix(<AuditTab />)} />
+          <Route path="usuarios" element={guarded("usuarios.ver", <UsersList />)} />
+          <Route path="usuarios/nuevo" element={guarded("usuarios.ver", <UserForm />)} />
+          <Route path="usuarios/:id" element={guarded("usuarios.ver", <UserForm />)} />
+          <Route path="roles" element={guarded("roles.ver", <RolesList />)} />
+          <Route path="roles/nuevo" element={guarded("roles.ver", <RoleForm />)} />
+          <Route path="roles/:id" element={guarded("roles.ver", <RoleForm />)} />
+          <Route path="permisos" element={guarded("permisos.ver", <PermissionsPage />)} />
+          <Route path="empresas" element={guarded("empresas.ver", <CompaniesPage />)} />
+          <Route path="catalogos" element={guarded("catalogos.ver", <CatalogsPage />)} />
+          <Route path="identidad" element={<Navigate to="/configuracion/identidad/identidad" replace />} />
+          <Route path="identidad/:tab" element={guarded("configuracion.ver", <IdentidadPage />)} />
+          <Route path="auditoria-sistema" element={guarded("auditoria.ver", <AuditoriaSistemaPage />)} />
+        </Route>
 
         <Route path="*" element={<NotFound />} />
       </Route>

@@ -28,10 +28,10 @@ describe("RolesList", () => {
     expect(await screen.findByText("Editor")).toBeInTheDocument();
   });
 
-  it("muestra el breadcrumb Administración > Roles", async () => {
+  it("muestra el breadcrumb Configuración > Roles", async () => {
     renderPage();
     await screen.findByText("Editor");
-    expect(screen.getByText("Administración")).toBeInTheDocument();
+    expect(screen.getByText("Configuración")).toBeInTheDocument();
     expect(screen.getAllByText("Roles").length).toBeGreaterThan(0);
   });
 });

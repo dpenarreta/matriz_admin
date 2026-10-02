@@ -14,12 +14,12 @@ import { IdentidadTab } from "./IdentidadTab";
 import "./ConfiguracionPage.css";
 
 const TABS = [
-  { key: "identidad", label: "Identidad", path: "/sistema/identidad/identidad" },
-  { key: "colores", label: "Colores y tipografía", path: "/sistema/identidad/colores-tipografia" },
-  { key: "apariencia", label: "Apariencia", path: "/sistema/identidad/apariencia" },
+  { key: "identidad", label: "Identidad", path: "/configuracion/identidad/identidad" },
+  { key: "colores", label: "Colores y tipografía", path: "/configuracion/identidad/colores-tipografia" },
+  { key: "apariencia", label: "Apariencia", path: "/configuracion/identidad/apariencia" },
 ];
 
-const BREADCRUMB_ITEMS = [{ label: "Administración" }, { label: "Configuración" }];
+const BREADCRUMB_ITEMS = [{ label: "Configuración" }, { label: "Identidad visual" }];
 
 const EDITABLE_FIELDS = [
   "site_name",
@@ -127,7 +127,7 @@ export function ConfiguracionPage() {
   return (
     <div className="configuracion-page">
       <Breadcrumbs items={BREADCRUMB_ITEMS} />
-      <h2>Configuración</h2>
+      <h2>Identidad visual</h2>
 
       <AdminTabs tabs={TABS} />
 

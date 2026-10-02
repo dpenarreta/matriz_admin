@@ -8,7 +8,7 @@ import "./UsersList.css";
 
 const STATUS_LABELS = { active: "Activo", disabled: "Deshabilitado", blocked: "Bloqueado" };
 
-const BREADCRUMB_ITEMS = [{ label: "Administración" }, { label: "Usuarios" }];
+const BREADCRUMB_ITEMS = [{ label: "Configuración" }, { label: "Usuarios" }];
 
 export function UsersList() {
   const {
@@ -47,7 +47,7 @@ export function UsersList() {
       <Breadcrumbs items={BREADCRUMB_ITEMS} />
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Usuarios</h2>
-        <Link to="/sistema/usuarios/nuevo" className="btn btn-primary btn-sm">
+        <Link to="/configuracion/usuarios/nuevo" className="btn btn-primary btn-sm">
           Nuevo usuario
         </Link>
       </div>
@@ -111,7 +111,7 @@ export function UsersList() {
                 <td>{new Date(user.created_at).toLocaleDateString()}</td>
                 <td>
                   <div className="d-flex gap-2 flex-wrap">
-                    <Link to={`/sistema/usuarios/${user.id}`} className="btn btn-outline-secondary btn-sm">
+                    <Link to={`/configuracion/usuarios/${user.id}`} className="btn btn-outline-secondary btn-sm">
                       Editar
                     </Link>
                     {user.status === "active" ? (

@@ -71,7 +71,7 @@ export function UserForm() {
         // (`replace` para que "atrás" no vuelva al formulario de alta ya
         // resuelto) — nunca se sale hacia el listado.
         const created = await adminUsersService.create(form);
-        navigate(`/sistema/usuarios/${created.id}`, { replace: true });
+        navigate(`/configuracion/usuarios/${created.id}`, { replace: true });
       }
     } catch (err) {
       setError(err.response?.data?.error?.message || "No se pudo guardar el usuario.");

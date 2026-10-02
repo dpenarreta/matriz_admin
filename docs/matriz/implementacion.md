@@ -55,7 +55,7 @@ posible, se dejó configurable. Hay que confirmarlas con el negocio.
 
 | Decisión | Valor implementado | Dónde se cambia |
 | --- | --- | --- |
-| Quién cambia la fecha de vencimiento | Administrador y Supervisor/Aprobador | Administración → Roles: permiso `matriz.cambiar_fecha` |
+| Quién cambia la fecha de vencimiento | Administrador y Supervisor/Aprobador | Configuración → Roles: permiso `matriz.cambiar_fecha` |
 | Qué fecha cuenta como cumplimiento | La de validación (como el mockup) | Configuración → Empresa ("Fecha que cuenta como cumplimiento") |
 | Escalamiento | Al supervisor (o al aprobador si no hay), a los 2 días, una sola vez | Configuración → Recordatorios (días y repetición) |
 | Copia al suplente | Sí | Configuración → Recordatorios |
@@ -69,8 +69,8 @@ posible, se dejó configurable. Hay que confirmarlas con el negocio.
 Los roles del mockup ya no están en el código: son roles editables del
 template base con permisos `matriz.*` del catálogo, y se asignan por empresa.
 Ver [roles-y-permisos.md](roles-y-permisos.md). Los módulos del template base se integraron en la interfaz de la matriz
-(sección Administración del menú lateral, rutas `/sistema/...`; las rutas
-antiguas `/admin/...` redirigen). Se suman las pantallas Empresas (con
+como pestañas de Configuración (rutas `/configuracion/...`; las rutas
+antiguas `/admin/...` y `/sistema/...` redirigen). Se suman las pantallas Empresas (con
 sucursales), Catálogos (áreas y entidades) y Auditoría del sistema,
 y el formulario de usuario asigna los roles del sistema, los permisos directos
 y los roles por empresa. Antes, el formulario del template base no tenía esas

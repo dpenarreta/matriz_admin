@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { errorMessage, matrizService } from "../../api/matrizService";
 import { Icon } from "../../components/common/Icon/Icon";
@@ -17,47 +17,6 @@ const TIMEZONES = [
   "America/Panama",
 ];
 
-export function ConfiguracionPage() {
-  const { can } = useCompany();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const tabs = [
-    ["empresa", "Empresa", true],
-    ["recordatorios", "Recordatorios", true],
-    ["miembros", "Usuarios y roles", can("gestionar_miembros")],
-    ["auditoria", "Auditoría", can("ver_auditoria")],
-  ].filter(([, , visible]) => visible);
-  const tab = tabs.some(([key]) => key === searchParams.get("tab")) ? searchParams.get("tab") : "empresa";
-
-  return (
-    <>
-      <div className="mz-view-head">
-        <div>
-          <h2>Configuración</h2>
-          <p className="mz-desc">Parámetros del tablero, recordatorios automáticos, roles por empresa y trazabilidad.</p>
-        </div>
-      </div>
-      <div className="mz-tabs" role="tablist">
-        {tabs.map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={tab === key}
-            className={tab === key ? "is-active" : ""}
-            onClick={() => setSearchParams({ tab: key })}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      {tab === "empresa" && <CompanyTab />}
-      {tab === "recordatorios" && <RemindersConfigTab />}
-      {tab === "miembros" && <MembersTab />}
-      {tab === "auditoria" && <AuditTab />}
-    </>
-  );
-}
-
 function LockedNote({ locked, text }) {
   if (!locked) return null;
   return (
@@ -67,7 +26,7 @@ function LockedNote({ locked, text }) {
   );
 }
 
-function CompanyTab() {
+export function CompanyTab() {
   const { company, can, reload } = useCompany();
   const notify = useToast();
   const locked = !can("configurar");
@@ -170,7 +129,7 @@ function CompanyTab() {
   );
 }
 
-function RemindersConfigTab() {
+export function RemindersConfigTab() {
   const { company, can } = useCompany();
   const notify = useToast();
   const locked = !can("configurar");
@@ -324,7 +283,7 @@ function RemindersConfigTab() {
   );
 }
 
-function MembersTab() {
+export function MembersTab() {
   const { company, reload } = useCompany();
   const { user } = useAuth();
   const notify = useToast();
@@ -430,7 +389,7 @@ function MembersTab() {
         ))}
         <PermissionMatrix roles={roles} />
         {canEditRoles && (
-          <Link to="/sistema/roles" className="btn btn-outline-secondary btn-sm mt-2">
+          <Link to="/configuracion/roles" className="btn btn-outline-secondary btn-sm mt-2">
             <Icon name="shield-lock" /> Configurar roles y permisos
           </Link>
         )}
@@ -491,7 +450,7 @@ function PermissionMatrix({ roles }) {
   );
 }
 
-function AuditTab() {
+export function AuditTab() {
   const { company } = useCompany();
   const [page, setPage] = useState(1);
   const [data, setData] = useState(null);

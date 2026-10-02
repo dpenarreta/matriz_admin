@@ -40,10 +40,10 @@ describe("UsersList", () => {
     expect(await screen.findByText("ana")).toBeInTheDocument();
   });
 
-  it("muestra el breadcrumb Administración > Usuarios", async () => {
+  it("muestra el breadcrumb Configuración > Usuarios", async () => {
     renderPage();
     await screen.findByText("ana");
-    expect(screen.getByText("Administración")).toBeInTheDocument();
+    expect(screen.getByText("Configuración")).toBeInTheDocument();
     expect(screen.getAllByText("Usuarios").length).toBeGreaterThan(0);
   });
 });

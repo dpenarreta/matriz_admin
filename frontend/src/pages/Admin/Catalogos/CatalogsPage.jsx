@@ -55,7 +55,7 @@ export function CatalogsPage() {
 
   return (
     <div className="catalogs-page">
-      <Breadcrumbs items={[{ label: "Administración" }, { label: "Catálogos" }, { label }]} />
+      <Breadcrumbs items={[{ label: "Configuración" }, { label: "Catálogos" }, { label }]} />
       <h2>Catálogos</h2>
       <ul className="nav nav-tabs mb-3">
         {KINDS.map(([key, text]) => (

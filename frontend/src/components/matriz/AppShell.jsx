@@ -8,9 +8,12 @@ import { useAuth } from "../../hooks/useAuth";
 import { initials } from "../../utils/matrizFormat";
 import { Icon } from "../common/Icon/Icon";
 import { ObligationFormModal } from "./ObligationFormModal";
+import { SYSTEM_TABS } from "../../pages/Matriz/ConfiguracionLayout";
 import { PeriodDrawer } from "./PeriodDrawer";
 
-// Módulos de la matriz: necesitan una empresa activa.
+// Menú lateral. Los módulos del template base (usuarios, roles, permisos,
+// empresas, catálogos, identidad visual y auditoría) viven dentro de
+// Configuración como pestañas, no como entradas de este menú.
 const MATRIX_NAV = [
   { path: "/resumen", label: "Resumen", icon: "grid-1x2" },
   { path: "/matriz", label: "Matriz de obligaciones", icon: "building", badge: true },
@@ -20,29 +23,8 @@ const MATRIX_NAV = [
   { path: "/configuracion", label: "Configuración", icon: "gear" },
 ];
 
-// Módulos del template base (usuarios, roles, permisos…), integrados en la
-// misma interfaz. Cada uno se muestra solo con su permiso del catálogo; la
-// autorización real siempre la vuelve a validar el backend.
-const SYSTEM_NAV = [
-  { path: "/sistema/usuarios", label: "Usuarios", icon: "people", permission: "usuarios.ver" },
-  { path: "/sistema/roles", label: "Roles", icon: "shield-lock", permission: "roles.ver" },
-  { path: "/sistema/permisos", label: "Permisos", icon: "key", permission: "permisos.ver" },
-  { path: "/sistema/empresas", label: "Empresas", icon: "buildings", permission: "empresas.ver" },
-  { path: "/sistema/catalogos", label: "Catálogos", icon: "tags", permission: "catalogos.ver" },
-  {
-    path: "/sistema/identidad/identidad",
-    match: "/sistema/identidad",
-    label: "Identidad visual",
-    icon: "palette",
-    permission: "configuracion.ver",
-  },
-  { path: "/sistema/auditoria", label: "Auditoría del sistema", icon: "clock-history", permission: "auditoria.ver" },
-];
-
-const ALL_NAV = [...MATRIX_NAV, ...SYSTEM_NAV];
-
 function titleFor(pathname) {
-  const item = ALL_NAV.find((entry) => pathname.startsWith(entry.match || entry.path));
+  const item = MATRIX_NAV.find((entry) => pathname.startsWith(entry.path));
   return item ? item.label : "Matriz";
 }
 
@@ -55,11 +37,11 @@ export function useShell() {
   return context;
 }
 
-/** Primera pantalla a la que puede entrar el usuario. */
+/** Primera pantalla a la que puede entrar el usuario: la matriz, o la
+ * Configuración si solo tiene permisos de los módulos del sistema. */
 export function homePathFor(user, hasCompany) {
   if (hasCompany) return "/resumen";
-  const item = SYSTEM_NAV.find((entry) => user?.permissions?.includes(entry.permission));
-  return item ? item.path : "/resumen";
+  return SYSTEM_TABS.some((tab) => user?.permissions?.includes(tab.permission)) ? "/configuracion" : "/resumen";
 }
 
 export function AppShell() {
@@ -121,7 +103,11 @@ export function AppShell() {
   }
 
   const fullName = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.username;
-  const systemItems = SYSTEM_NAV.filter((item) => user?.permissions?.includes(item.permission));
+  const hasSystemTabs = SYSTEM_TABS.some((tab) => user?.permissions?.includes(tab.permission));
+  // Sin empresa, la única entrada del menú es Configuración (módulos del sistema).
+  const navItems = company
+    ? MATRIX_NAV
+    : MATRIX_NAV.filter((item) => item.path === "/configuracion" && hasSystemTabs);
   const roleLabel = company?.role_label || (user?.is_superuser ? "Superusuario" : "Sin rol en empresas");
 
   function handleSearch(event) {
@@ -138,7 +124,7 @@ export function AppShell() {
       <NavLink
         to={item.path}
         className={() =>
-          `mz-nav-item ${location.pathname.startsWith(item.match || item.path) ? "is-active" : ""}`
+          `mz-nav-item ${location.pathname.startsWith(item.path) ? "is-active" : ""}`
         }
       >
         <Icon name={item.icon} />
@@ -172,15 +158,7 @@ export function AppShell() {
               </div>
             )}
             <ul className="mz-nav">
-              {company && MATRIX_NAV.map(navItem)}
-              {systemItems.length > 0 && (
-                <>
-                  <li className="mz-nav-section" aria-hidden="true">
-                    Administración
-                  </li>
-                  {systemItems.map(navItem)}
-                </>
-              )}
+              {navItems.map(navItem)}
             </ul>
             <div className="mz-sidebar-foot">
               <span className="mz-role-pill">
@@ -224,7 +202,7 @@ export function AppShell() {
                     className="mz-icon-btn"
                     title="Recordatorios y notificaciones"
                     aria-label="Recordatorios y notificaciones"
-                    onClick={() => navigate("/configuracion?tab=recordatorios")}
+                    onClick={() => navigate("/configuracion/recordatorios")}
                   >
                     <Icon name="bell" />
                     {attention > 0 && <span className="mz-dot" />}
@@ -292,11 +270,11 @@ export function RequireCompany({ children }) {
     <div className="mz-empty-company">
       <h2>Sin empresas asignadas</h2>
       <p>
-        Su usuario no tiene un rol en ninguna empresa. Un administrador puede asignárselo en Administración → Usuarios.
+        Su usuario no tiene un rol en ninguna empresa. Un administrador puede asignárselo en Configuración → Usuarios.
       </p>
       {homePathFor(user, false) !== "/resumen" && (
         <NavLink to={homePathFor(user, false)} className="btn btn-outline-secondary btn-sm">
-          Ir a Administración
+          Ir a Configuración
         </NavLink>
       )}
     </div>

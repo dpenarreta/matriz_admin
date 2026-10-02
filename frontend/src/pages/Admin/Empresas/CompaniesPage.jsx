@@ -5,7 +5,7 @@ import { errorMessage } from "../../../api/matrizService";
 import { Breadcrumbs } from "../../../components/common/Breadcrumbs/Breadcrumbs";
 import { usePermission } from "../../../hooks/usePermission";
 
-const BREADCRUMB_ITEMS = [{ label: "Administración" }, { label: "Empresas" }];
+const BREADCRUMB_ITEMS = [{ label: "Configuración" }, { label: "Empresas" }];
 const TIMEZONES = [
   "America/Guayaquil",
   "America/Bogota",

@@ -2,7 +2,7 @@ import { Breadcrumbs } from "../../../components/common/Breadcrumbs/Breadcrumbs"
 import { usePermissionsCatalog } from "../../../hooks/usePermissionsCatalog";
 import "./PermissionsPage.css";
 
-const BREADCRUMB_ITEMS = [{ label: "Administración" }, { label: "Permisos" }];
+const BREADCRUMB_ITEMS = [{ label: "Configuración" }, { label: "Permisos" }];
 
 /**
  * Vista de solo lectura del catálogo de permisos: los permisos son una

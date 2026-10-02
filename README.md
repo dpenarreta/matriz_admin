@@ -45,8 +45,7 @@ nuevos van solo aquí.
 | Calendario | Vencimientos del mes coloreados por estado |
 | Documentos | Expedientes con evidencia y pendientes de evidencia |
 | Reportes | Cumplimiento a tiempo y tardío, por área y por entidad, con rango de fechas y exportación |
-| Configuración | Empresa, recordatorios y escalamiento, usuarios y roles por empresa, auditoría |
-| Administración (en el mismo menú, según permisos) | Usuarios (con roles del sistema, permisos directos y roles por empresa), roles, permisos, empresas y sucursales, catálogos, identidad visual y auditoría del sistema. Son los módulos del template base integrados en la interfaz de la matriz |
+| Configuración | Una pestaña por ventana, según permisos. De la empresa activa: empresa, recordatorios y escalamiento, usuarios y roles de la empresa, auditoría de la empresa. Del sistema (módulos del template base): usuarios (con roles del sistema, permisos directos y roles por empresa), roles, permisos, empresas y sucursales, catálogos, identidad visual y auditoría del sistema |
 
 Un **programador** (`python manage.py run_scheduler`) genera los períodos
 siguientes, envía recordatorios (15, 7, 3 y 1 día antes y el día del
@@ -57,7 +56,7 @@ avisos fallidos, aunque nadie tenga la aplicación abierta.
 
 Todo el acceso usa el sistema del template base: un **catálogo de permisos**
 (con los módulos `matriz`, `empresas` y `catalogos` agregados), **roles
-editables** en Administración → Roles y **usuarios** en Administración →
+editables** en Configuración → Roles y **usuarios** en Administración →
 Usuarios. El formulario de usuario asigna los roles del sistema, los permisos
 directos y el **rol de la persona en cada empresa**.
 

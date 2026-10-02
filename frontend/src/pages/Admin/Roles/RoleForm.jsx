@@ -50,7 +50,7 @@ export function RoleForm() {
         // navegar: hay que cerrar el diálogo explícitamente en esta rama
         // también, o quedaría abierto sobre la vista de edición.
         const created = await rolesService.create(payload);
-        navigate(`/sistema/roles/${created.id}`, { replace: true });
+        navigate(`/configuracion/roles/${created.id}`, { replace: true });
       }
       setIsConfirmOpen(false);
     } catch (err) {
